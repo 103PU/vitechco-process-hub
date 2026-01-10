@@ -1,0 +1,107 @@
+Here is the detailed, enterprise-grade execution plan for Week 2: Digitization & Rich Data Entry, designed to
+  maximize performance, scalability, and maintainability.
+
+  Executive Summary
+
+  The goal is to transition from basic data seeding to a robust Data Ingestion Pipeline and a Rich User Interface. We
+  will move away from monolithic scripts to a modular Service-Oriented Architecture (SOA) for file processing, ensuring
+  the system can handle various formats (DOCX, Excel, PDF) with high fidelity and data integrity.
+
+  ---
+
+  1. Architectural Strategy & Design Patterns
+
+  To ensure extensibility and clean code, we will apply specific software engineering principles:
+
+   * Design Pattern: Strategy Pattern (Behavioral): Used for the File Parsing module. We will define an interface
+     IFileParser, allowing us to swap logic for .docx, .xlsx, or .pdf without modifying the core ingestion service.
+   * Design Pattern: Factory Pattern (Creational): A ParserFactory will instantiate the correct parser strategy based
+     on MIME type or file extension.
+   * Data Integrity (DBA):
+       * Deduplication: We will use SHA-256 hashing on file buffers before processing. A composite unique constraint or
+         logic check on (hash, type) will prevent duplicate assets.
+       * ACID Transactions: All imports (File upload + Metadata creation + Parsing + Document linkage) will be wrapped
+         in Prisma Transactions ($transaction) to prevent orphan files in S3 or "ghost" records in DB.
+   * Storage Strategy: Hybrid approach.
+       * Raw Source: S3 (immutable snapshot).
+       * Processed Content: Database (HTML/JSONB for rapid querying/display).
+
+  ---
+
+  2. Detailed Implementation Plan
+
+  Module A: Advanced Import Pipeline (Backend/Core)
+  Focus: `scripts/data-manager.ts`, `src/lib/import/...`
+
+   1. Refactor `data-manager.ts`:
+       * Decompose the current monolithic script into a ImportService class.
+       * Create src/lib/parsers/ directory.
+   2. Implement Parsers (The Strategy):
+       * DocxParser: Enhance existing mammoth implementation. Add custom style maps to map Word styles (Heading 1,
+         Normal) to Tailwind classes or semantic HTML tags.
+       * ExcelParser: Integrate xlsx or exceljs.
+           * Logic: Convert sheets to HTML Tables (<table>). Preserve header rows.
+           * Edge Case: For massive files, implement a "preview only" mode (first 50 rows) and attach the full file as
+             a download link.
+       * PdfParser: Integrate pdf-parse.
+           * Logic: Extract raw text for search indexing. Store the PDF file itself for viewing. (PDF-to-HTML is
+             notoriously brittle; "Text + Link" is the stable enterprise choice).
+   3. Deduplication Logic:
+       * Before upload: Calculate crypto.createHash('sha256').update(buffer).digest('hex').
+       * Check FileAsset table for existing hash. If found, link to existing asset instead of re-uploading (Space
+         Optimization).
+
+  Module B: UI/UX Enhancements (Frontend)
+  Focus: `src/features/documents`, `src/components/ui`
+
+   1. Rich Document Form (`DocumentForm.tsx`):
+       * Multi-Upload Zone: Implement a dropzone that accepts mixed media.
+       * "Smart Import" Action: When a user uploads a DOCX/Excel file in the editor:
+           1. Upload to S3.
+           2. Call Server Action parseDocument.
+           3. Inject the resulting HTML directly into the Tiptap editor content.
+       * Metadata Selectors: Convert standard selects to Combobox (Searchable Selects) for Tags, Departments, and
+         Machine Models (crucial as lists grow).
+   2. Interactive Checklist Builder:
+       * Structure: Create a new component ChecklistEditor.
+       * UX: Use @dnd-kit/sortable for drag-and-drop reordering of steps.
+       * Validation: Ensure every step has a description before save.
+
+  Module C: Taxonomy Management (Admin)
+  Focus: `src/app/admin/settings/...`
+
+   1. Generic Data Table:
+       * Build a reusable AdminTable<T> component using @tanstack/react-table.
+       * Features: Server-side pagination, text search, bulk delete.
+   2. CRUD Pages:
+       * Implement /admin/brands, /admin/departments, /admin/tags.
+       * These will allow non-developers to manage the classification system without touching the DB.
+
+  Module D: Quality Assurance (QA)
+  Focus: `src/__tests__`
+
+   1. Unit Tests (`jest`):
+       * Test DocxParser: Feed a known .docx buffer, assert HTML output contains specific strings.
+       * Test ImportService: Mock S3 calls to ensure logic flows correctly without real network requests.
+
+  ---
+
+  3. Risk Assessment & Contingencies
+
+
+  ┌──────────────┬──────────────────┬──────────────────────────────────────────────────────────────────────────────────
+  ─┐
+  │ Risk Scen... │ Impact           │ Mitigation Strategy
+  │
+  ├──────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────────────
+  ─┤
+  │ **User up... │ Server OOM (O... │ Streaming: Use Node.js streams for S3 upload. Async Processing: For files >10M...
+  │
+  │ **Complex... │ Broken HTML L... │ Sanitization: Use dompurify on server side. Fallback: Always provide "Download...
+  │
+  │ **Duplica... │ Data confusion   │ Database Constraint: @@unique([name, type]). Normalization: Trim whitespace an...
+  │
+  │ **S3 Uplo... │ Orphaned DB r... │ Transaction Rollback: If S3 fails, the DB record creation must roll back autom...
+  │
+  └──────────────┴──────────────────┴──────────────────────────────────────────────────────────────────────────────────
+  

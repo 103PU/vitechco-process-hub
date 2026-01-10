@@ -1,0 +1,111 @@
+WEEK 3: TECHNICIAN EXPERIENCE & PERFORMANCE OPTIMIZATION
+  Version: 1.0
+  Focus: Search Engine, Work Session Logic, Performance Tuning.
+
+  1. Architecture & OOP Design (Refactoring & New Models)
+
+  Trước khi code, chúng ta cần định nghĩa cấu trúc dữ liệu và các Class/Service mới để đảm bảo tính mở rộng.
+
+  1.1. Database Schema Updates (schema.prisma)
+  Cần thêm các bảng để quản lý "Phiên làm việc" (Work Session) của kỹ thuật viên.
+
+   * Model `WorkSession`: Đại diện cho một lần thực hiện bảo trì/sửa chữa.
+       * Attributes: id, userId, startTime, endTime, status (OPEN, COMPLETED), title.
+       * Relations: items (One-to-Many with WorkSessionItem).
+   * Model `WorkSessionItem`: Một đầu việc cụ thể trong phiên (tương ứng với 1 Document/Quy trình).
+       * Attributes: documentId, status (PENDING, IN_PROGRESS, DONE), `progressJson` (Lưu trạng thái các checkbox
+         steps: `{ "step_1": true, "step_2": false }`).
+   * Model `AuditLog`: (Cho phần Logging)
+       * Attributes: action, entity, entityId, userId, metadata (JSON).
+
+  1.2. Service Layer Design (OOP)
+  Áp dụng Service Repository Pattern để tách biệt logic.
+
+   * Class `SearchService`:
+       * Method buildQuery(filters): Áp dụng Factory Pattern để tạo câu query Prisma dynamic.
+       * Method execute(query, page, limit): Xử lý pagination và caching.
+   * Class `SessionManager`:
+       * Method startSession(userId, documentIds[]): Khởi tạo session.
+       * Method updateProgress(sessionId, itemId, stepData): Cập nhật trạng thái realtime.
+       * Method finalizeSession(sessionId): Đóng session, tính toán thời gian, generate report.
+
+  ---
+
+  2. Detailed Implementation Plan (Work Breakdown)
+
+  Phase 1: Search & Browse (Tìm kiếm & Duyệt)
+   * Main Work: Xây dựng bộ máy tìm kiếm mạnh mẽ và giao diện hiển thị.
+       * Task 1.1: API GET /api/search. Hỗ trợ params: q, tags, brand, model, dept.
+       * Task 1.2: Component GlobalSearch. Sử dụng useDebounce (300ms) để gọi API.
+       * Task 1.3: UI SearchResults. Grid layout, hiển thị Tags, Preview text.
+       * Task 1.4: Tích hợp SWR (Stale-While-Revalidate) để cache kết quả tìm kiếm, tránh re-fetch khi back lại trang.
+
+  Phase 2: Technician Workflow (Luồng kỹ thuật viên)
+   * Main Work: Chức năng "Job Session" - Kỹ thuật viên chọn bài, làm việc và tích checklist.
+       * Task 2.1: Trang DocumentDetail. Render HTML content (safe), hiển thị list attachments (S3 links).
+       * Task 2.2: Logic "Add to Session". Nút bấm thêm tài liệu vào hàng đợi (State management: Zustand/Context).
+       * Task 2.3: Trang ActiveSession. Hiển thị danh sách các quy trình đang làm.
+           * Sub-task: Component InteractiveChecklist. Render checklist từ JSON, cho phép tick/untick, lưu state cục bộ
+             và sync lên server.
+       * Task 2.4: API POST /api/sessions/commit. Lưu toàn bộ kết quả phiên làm việc.
+
+  Phase 3: Infrastructure & Optimization (Hạ tầng)
+   * Main Work: Tối ưu tốc độ và lưu trữ.
+       * Task 3.1: Database Indexing. Thêm @index vào title, slug, tags trong Prisma.
+       * Task 3.2: S3 Integration. Viết utility upload/get presigned URL cho file đính kèm.
+       * Task 3.3: Frontend Optimization.
+           * Lazy load các component nặng (PDF Viewer, Rich Text Editor).
+           * Skeleton Loading cho các card khi đang fetch data.
+
+  ---
+
+  3. Scenarios, Bugs & Edge Cases
+
+  Các trường hợp giả định (Assumptions) & Xử lý
+   1. Network Drop: Kỹ thuật viên đang tick checklist thì mất mạng.
+       * Solution: Lưu state vào localStorage. Khi có mạng, sync lại (Background Sync).
+   2. Concurrency: 2 người cùng sửa 1 document gốc khi đang có người dùng nó làm quy trình.
+       * Solution: WorkSession snapshot lại version của Document tại thời điểm tạo session (nếu cần thiết kế phức tạp)
+         hoặc chấp nhận Document luôn là bản latest (đơn giản cho W3).
+   3. Large Data: Search trả về 10,000 kết quả.
+       * Solution: Pagination cursor-based (load more). Giới hạn return 20 items/request.
+
+  Potential Bugs & Fixes
+   * Bug: Search lag khi gõ tiếng Việt có dấu (Telex).
+       * Fix: Chỉ trigger search khi user ngừng gõ 300ms (Debounce) và normalize string (bỏ dấu khi so sánh nếu DB
+         không hỗ trợ Full Text Search tiếng Việt tốt).
+   * Bug: Hydration Error trên Next.js do lệch thời gian server/client trong WorkSession.
+       * Fix: Sử dụng useEffect để render phần thời gian/date phía client.
+
+  ---
+
+  4. Performance Strategy
+
+  Reduce Render Time
+   * Memoization: Sử dụng React.memo cho các ChecklistItem để khi tick 1 cái, không render lại cả list 100 cái.
+   * Virtualization: Dùng thư viện react-window nếu danh sách tài liệu trong 1 folder > 50 items.
+
+  Limit Data Overloaded
+   * Select specific fields: Prisma query chỉ select: { id, title, slug } cho danh sách, không select contentHtml
+     (nặng).
+   * Image Optimization: Dùng next/image với loader phù hợp.
+----
+5. Final Report & Evaluation Criteria
+
+  Cuối tuần 3, chúng ta sẽ đánh giá dựa trên:
+
+  Evaluation (Đánh giá)
+   1. Real-time Performance:
+       * Search latency < 200ms.
+       * Chuyển trang (Navigation) < 100ms (nhờ prefetch/cache).
+   2. UI/UX:
+       * Không có layout shift (CLS) khi load ảnh/dữ liệu.
+       * Feedback rõ ràng khi user tương tác (Toast notification, Loading spinners).
+   3. Code Quality:
+       * Không có "Hard-coded strings".
+       * Type safety (No any types).
+       * Separation of Concerns: Logic search không nằm trong UI component.
+
+  Feedback Loop
+   * Tạo file FEEDBACK_LOG.md để ghi lại các vấn đề phát sinh khi test thực tế (VD: Checklist trên mobile quá bé, nút
+     bấm khó thao tác...).

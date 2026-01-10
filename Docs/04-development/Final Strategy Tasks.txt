@@ -1,0 +1,99 @@
+ Lộ trình 4 tuần (theo ưu tiên khối lõi → trải nghiệm → hiệu năng → sẵn sàng production)
+
+   Tuần 1: Kiến trúc, dữ liệu, bảo mật nền tảng
+   •  Data & Domain
+     •  Cố định schema: Document, Step, DocumentType, Tag, Department, Brand/MachineModel; thêm FileAsset
+        (lưu metadata file gốc, MIME, kích thước, hash) và DocumentVersion.
+     •  Thiết lập migration chuẩn (prisma migrate), seed dữ liệu phân loại mẫu.
+   •  AuthZ/RBAC
+     •  Hoàn thiện middleware bảo vệ route (server components + API) cho role ADMIN/TECHNICIAN; chặn server
+        actions chưa có guard.
+     •  Bổ sung audit log tối thiểu (ai tạo/sửa/xóa tài liệu).
+   •  Design System & UI nền
+     •  Chuẩn hóa typography, spacing, màu, button/input/select/toast/skeleton; tạo Layouts (Home, Admin
+        Shell).
+     •  Thiết kế wireframe nhanh cho: Trang chủ tìm kiếm, Admin Documents, Import Dashboard, Checklist
+        Viewer.
+   •  Infra Dev
+     •  Thiết lập script dev: npm run lint, npm run test, npm run db:reset/seed.
+     •  Chuẩn hóa .env.example (không commit secrets).
+
+   Tuần 2: Số hóa dữ liệu & nhập liệu giàu định dạng
+   •  Pipeline nhập & đồng bộ định dạng
+     •  Mở rộng data-manager: tách module đọc Word/Excel/PDF; lưu HTML/markdown sạch + snapshot file gốc
+        (S3-compatible); sinh preview text.
+     •  Xử lý giữ định dạng:
+       •  DOCX → HTML (mammoth) + CSS tối giản;
+       •  Excel → HTML tables + link file gốc;
+       •  PDF → fallback text (pdf-parse) + link tải.
+     •  Chống trùng lặp bằng hash nội dung + (title, type).
+   •  UI nhập liệu & chỉnh sửa
+     •  Nâng cấp form tài liệu: multi-upload (file gốc + ảnh), chọn loại/tags/departments/machine models,
+        preview định dạng gốc.
+     •  Checklist steps: drag-drop reordering, validation thứ tự, bulk add.
+   •  Quản trị danh mục
+     •  CRUD Tag/Department/DocumentType/Brand/MachineModel với inline table + filter + bulk apply.
+   •  QA nhanh
+     •  Test đơn vị cho services/actions chính (documents, tags, steps).
+
+   Tuần 3: Trải nghiệm kỹ thuật viên & hiệu năng
+   •  Tìm kiếm & duyệt
+     •  Thanh search + filter (type/tag/department/brand/model); debounce + SWR cache.
+     •  Trang chi tiết tài liệu: hiển thị nội dung giàu định dạng + checklist tương tác + link file gốc.
+   •  Luồng công việc kỹ thuật viên
+     •  “Job/Work Session”: chọn nhiều quy trình → tạo lộ trình cho 1 user; lưu tiến độ (step
+        done/remaining, timestamp); xuất báo cáo tóm tắt.
+   •  Phân vùng dữ liệu & tối ưu
+     •  Index DB cho title/content, join tables; pagination cursor-based cho danh sách.
+     •  CDN/S3 cho file gốc; thumbnail/previews nhẹ.
+     •  Giảm render: skeletons, lazy load heavy sections, memo hóa bảng, limit hydration.
+   •  Theo dõi & logging
+     •  Structured logs cho actions quan trọng (create/update/delete/import).
+     •  Basic health metrics: request latency, error rate (middleware wrapper).
+
+   Tuần 4: Độ tin cậy, polish, và chuẩn bị phát hành
+   •  Hardening
+     •  Rà soát bảo mật: chặn IDOR, kiểm tra upload MIME/size, scan virus (nếu khả thi) trước lưu.
+     •  Rate-limit server actions nhạy cảm (xóa, import).
+   •  UX polish
+     •  Empty states, error boundaries, trạng thái loading rõ ràng.
+     •  Keyboard shortcuts cơ bản (search focus, save).
+   •  Testing & Hiệu năng
+     •  Kiểm thử hồi quy: Jest + RTL cho form/document flow; test server actions với prisma test DB.
+     •  Kiểm tra Lighthouse (FCP/TTI), tối ưu bundles (analyze, code-split, tree-shake icons).
+   •  Triển khai
+     •  CI lint+test; build preview; cấu hình env cho prod.
+     •  Migration prod + seed danh mục; bật backup DB.
+     •  Hướng dẫn onboard nội bộ (ngắn gọn): cách import, cách tạo checklist, phân quyền.
+
+   Hạng mục chuyên sâu & kết quả mong đợi
+   •  Data fidelity & định dạng: Import giữ cấu trúc (heading/list/table), lưu file gốc + HTML sạch; preview
+       tải nhanh (<300ms metadata, <2s load nội dung).
+   •  Checklist & luồng kỹ thuật: Bảng bước có trạng thái, reorder, lưu tiến độ; lộ trình cho 1 ca làm việc
+      ghép nhiều quy trình.
+   •  Quản trị & RBAC: ADMIN full CRUD danh mục, tài liệu, user; TECHNICIAN chỉ đọc/thực thi; audit log tối
+      thiểu.
+   •  Hiệu năng & nhẹ: Pagination + SWR cache; tránh over-render; CDN assets; DB index; target FCP <2s.
+   •  Triển khai an toàn: CI/CD với lint+test; migration có backup; env tách biệt; logging + cảnh báo lỗi cơ
+       bản.
+
+   Xác thực & đo lường
+   •  Hiệu năng: Lighthouse ≥ 90 (perf); TTFB < 500ms trang chủ; danh sách tài liệu filter < 300ms.
+   •  Tính năng: Import 1000 tài liệu không lỗi; checklist lưu tiến độ ổn định; RBAC không lọt quyền (manual
+       pen-test vai trò).
+   •  UX: Nghiệm thu nội bộ với kỹ thuật viên: ≤2 click để mở quy trình mong muốn; thời gian tìm kiếm giảm
+      ≥50% so với trước.
+   •  Độ tin cậy: 0 error trong log sau 1 ngày chạy thử; backup DB hoạt động.
+
+   Ưu tiên thực thi (MoSCoW rút gọn)
+   •  Must: RBAC + guard server actions, import + giữ định dạng cơ bản, checklist/steps, search+filter,
+      pagination/index, file storage S3.
+   •  Should: Lộ trình ca làm việc, audit log, structured logging, skeletons/lazy load, brand/model
+      taxonomy.
+   •  Could: Keyboard shortcuts, virus scan uploads, PDF text extraction nâng cao, báo cáo tiến độ.
+   •  Won’t (tháng này): Realtime collaborative editing, offline-first, advanced analytics BI.
+
+   ──────────────────────────────────────────
+
+   Nếu bạn muốn, tôi sẽ cụ thể hóa backlog thành task chi tiết theo tuần với người phụ trách và ước lượng
+   giờ, rồi tạo bộ lệnh chạy kiểm thử/CI tương ứng.

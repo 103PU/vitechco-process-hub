@@ -1,0 +1,52 @@
+services:
+  # ts-src:
+  #   build:
+  #     context: .
+  #     dockerfile: ./src/Dockerfile
+  #   ports:
+  #     - "3000:3000" # Next.js/Node.js default port
+  #   restart: unless-stopped
+  #   init: true
+  #   # env_file: ./.env  # Uncomment if .env file exists
+  #   networks:
+  #     - appnet
+  #   # If you add a database, uncomment depends_on below
+  #   # depends_on:
+  #   #   - postgres
+
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=vitechco_hub
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  minio:
+    image: minio/minio
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:

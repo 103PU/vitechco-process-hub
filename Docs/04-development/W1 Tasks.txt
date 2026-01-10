@@ -1,0 +1,140 @@
+Kế hoạch chi tiết Tuần 1 (cập nhật theo thông tin bạn cung cấp)
+
+   Quyết định nền tảng & giả định
+   •  Storage: Ưu tiên S3-compatible. Nếu chạy local/docker: dùng MinIO (dễ self-host, S3 API). Khi lên
+      cloud: chuyển AWS S3.
+     •  Pros MinIO: self-host, không phụ thuộc cloud, S3 API chuẩn; Cons: phải vận hành, backup.
+     •  Pros S3: ổn định, CDN tích hợp, chi phí theo dùng; Cons: phụ thuộc AWS, cần cấu hình IAM.
+     → Kế hoạch: cấu hình abstraction client S3 (aws-sdk v3) + env cho endpoint/key/secret/bucket, default
+   MinIO profile.
+   •  CI/CD: Tạm local + docker test; chuẩn bị file workflow (lint+test) nhưng chưa bắt buộc chạy nếu bạn
+      chưa muốn push.
+   •  RBAC: TECHNICIAN được tạo tài liệu và cập nhật (feedback/update log/news) nhưng không quản lý
+      user/role. ADMIN phân quyền. Không thêm vai trò mới tuần này.
+   •  Audit log: Lưu DB nội bộ, cấu trúc nhẹ; không gửi external (để tránh impact perf).
+   •  Design/Wireframe: Đặt trong repo dưới docs/ (md + hình xuất từ wireframe), bám guideline màu/logo/font
+       sẵn.
+   •  Seed: Sinh dữ liệu mẫu bám schema hiện tại (DocumentType/Tag/Department/Brand/MachineModel + vài
+      Document demo).
+   •  Hiệu năng: Ưu tiên FCP trong Chrome DevTools; tối ưu layout/skeleton, giới hạn bundle icon, pagination
+       mặc định.
+
+   ──────────────────────────────────────────
+
+   Backlog hành động chi tiết Tuần 1
+
+   1) Data & Domain
+   •  Schema updates (Prisma)
+     •  Thêm FileAsset: id, originalName, mime, size, hash, storagePath, bucket, createdAt, liên kết
+        optional documentId, index (documentId), unique (hash) optional để chống trùng.
+     •  Thêm DocumentVersion: id, version (int), title, content, documentId, fileAssetId?, authorId,
+        createdAt; index (documentId, version desc).
+     •  Bổ sung index cho join tables: documentOnTag(documentId), documentOnDepartment(documentId),
+        documentOnMachineModel(documentId).
+   •  Migrations & seed
+     •  Viết migration Prisma cho bảng mới + index.
+     •  Seed mẫu (scripts/seed):
+       •  DocumentType: 5–8 loại phổ biến (Quy trình, Hướng dẫn, Lịch sử lỗi, Bảo trì định kỳ, Training).
+       •  Department: Kỹ thuật, IT, QA, Vận hành.
+       •  Brand/MachineModel: 3–5 brand, 2–3 model mỗi brand.
+       •  Tags: 10 tag phổ biến (SC code, Belt, Fuser, Firmware, Network, etc.).
+       •  Document demo: 5–10 bản với steps mẫu, gán tags/department/model.
+     •  Tích hợp seed vào npm run db:reset (migrate reset + seed).
+
+   2) AuthZ/RBAC & Audit
+   •  Guards
+     •  Rà soát toàn bộ server actions (documents, tags, depts, users) đảm bảo session check; role rule:
+        ADMIN cho user/role mgmt, TECHNICIAN được CRUD tài liệu/feedback/news (theo bạn yêu cầu).
+     •  Middleware route-level: chặn /admin/** nếu không ADMIN.
+   •  AuditLog (DB)
+     •  Model: AuditLog { id, actorId, action, entity, entityId, payload json?, createdAt }, index (entity,
+        entityId), (createdAt desc).
+     •  Hook ghi log tại actions create/update/delete document, updateUserRole/deleteUser.
+     •  Payload giới hạn (title/id) để tránh phình log; không log content lớn.
+
+   3) Design System & UI nền
+   •  Token & components
+     •  Chuẩn hóa theme: font, spacing scale, color palette theo guideline hiện có;
+        button/input/select/toast/skeleton dùng chung.
+     •  Tạo layout chuẩn:
+       •  AdminShell (sidebar, header auth, content with Toaster).
+       •  HomeLayout (header search/auth, main with document flow).
+   •  Wireframe (đặt trong repo `docs/wireframes.md` + ảnh)
+     •  Trang chủ tìm kiếm: hero + search + filter chips + cards.
+     •  Admin Documents: table với filter/search, bulk actions, pagination, quick stats.
+     •  Import Dashboard: upload (chọn file gốc), map type/tags/dept, preview kết quả parse, log lỗi.
+     •  Checklist Viewer: pane nội dung + steps checklist (tick, reorder), metadata (tags/models/dept).
+
+   4) Infra Dev
+   •  Scripts & env
+     •  Kiểm tra/đảm bảo: npm run lint, npm run test, npm run db:reset (migrate reset + seed).
+     •  .env.example: DATABASE_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID/SECRET,
+        S3_ENDPOINT/REGION/KEY/SECRET/BUCKET, FILE_MAX_SIZE_MB (thông tin giới hạn upload).
+   •  Storage client
+     •  Thêm module lib/storage/s3.ts (aws-sdk v3) hỗ trợ MinIO qua endpoint override; hàm putObject,
+        getSignedUrl, deleteObject, kèm test nhỏ mock.
+
+   5) Hiệu năng sớm (liên quan FCP)
+   •  Giới hạn bundle icon (tree-shake lucide), dùng dynamic import cho Tiptap/rich editors trong admin
+      form.
+   •  Skeleton/placeholder nhất quán cho danh sách tài liệu, form.
+   •  Pagination mặc định (e.g., 20 item), tránh render full list.
+
+   ──────────────────────────────────────────
+
+   Trình tự thực thi trong tuần (đề xuất)
+   1. Ngày 1-2: Schema + migrations + seed; cập nhật .env.example; thêm storage client abstraction.
+   2. Ngày 2-3: RBAC guard sweep + AuditLog model & hook; test thủ công route admin.
+   3. Ngày 3: Design tokens/components & layouts; thêm skeleton/empty states cơ bản.
+   4. Ngày 4: Wireframe chi tiết (docs/wireframes.md + export ảnh); rà với guideline màu/logo/font.
+   5. Ngày 5: Ổn định scripts, chạy lint/test/db:reset; điều chỉnh theo feedback.
+
+
+ Kế hoạch Tuần 1 (phiên bản chốt, dùng pipeline “sâu”)
+
+   1) Schema & Data
+   •  Prisma: thêm FileAsset (id, originalName, mime, size, hash unique?, storagePath, bucket, createdAt,
+      documentId?), DocumentVersion (id, version int, title, content, documentId, fileAssetId?, authorId,
+      createdAt), AuditLog (id, actorId, action, entity, entityId, payload json?, createdAt). Indexes:
+      document join tables on documentId; AuditLog(entity,entityId), (createdAt desc).
+   •  Migrations: tạo migration cho bảng/index mới.
+   •  Seed (gắn npm run db:reset): types/tags/departments/brands/models + 5–10 documents demo với steps và
+      liên kết.
+   •  Log cleanup: cron weekly xóa AuditLog >60 ngày.
+
+   2) Storage (MinIO, 100MB/file)
+   •  Env: S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET, FILE_MAX_SIZE_MB=100.
+   •  Client: lib/storage/s3.ts (aws-sdk v3) với endpoint override cho MinIO; helpers putObject,
+      getSignedUrl, deleteObject.
+   •  Upload guard: check size trước khi upload, trả lỗi rõ ràng.
+
+   3) RBAC & Audit
+   •  Guard sweep server actions: TECHNICIAN được CRUD tài liệu/feedback/news; ADMIN duy nhất quản lý
+      user/role.
+   •  Middleware chặn /admin/** nếu không ADMIN.
+   •  Audit hook: ghi create/update/delete tài liệu, đổi role/xóa user; payload gọn (id/title/actor).
+   •  Tests nhỏ cho deny/allow theo role.
+
+   4) Design System & UI nền
+   •  Chuẩn hóa tokens (font/spacing/colors/buttons/inputs/select/toast/skeleton) theo guideline; shared
+      layout: Home, Admin shell.
+   •  Skeleton/empty states chuẩn cho list/forms.
+   •  Wireframes + PNG xuất vào docs/wireframes.md (Home Search, Admin Documents, Import Dashboard,
+      Checklist Viewer).
+
+   5) Infra & CI (pipeline “sâu”)
+   •  .env.example cập nhật (DB, NextAuth, Google OAuth, MinIO, file size).
+   •  CI GitHub Actions (single job sâu):
+     •  Services: Postgres.
+     •  Steps: checkout → npm ci → npm run lint → npm run db:reset (migrate+seed, dùng DATABASE_URL test) →
+        npm run test.
+   •  Hướng dẫn: cần secrets cho CI (DATABASE_URL test, NEXTAUTH_SECRET dummy, MinIO test creds). Nightly
+      hoặc on-PR chạy cùng job sâu (theo yêu cầu “chuyên nghiệp nhất”).
+
+   6) Trình tự thực thi trong tuần
+
+   1) Schema/migration/seed + env example.
+   2) MinIO storage client + upload guard.
+   3) RBAC sweep + AuditLog + cleanup cron + tests quyền.
+   4) Design tokens/layouts/skeletons + wireframes/PNG.
+   5) Thiết lập CI sâu, chạy thử: npm run lint && npm run db:reset && npm run test.

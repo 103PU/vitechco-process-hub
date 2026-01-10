@@ -1,0 +1,13 @@
+bạn hãy review và read lại toàn bộ cấu trúc, mã nguồn, data,.. mọi thứ trong projects để hiểu và ghi nhớ rõ       │
+│   version, state hiện tại của dự án một cách thật kĩ càng rồi tôi sẽ giao tasks cho bạn, bao gồm:                   │
+│   - Phân tích kiến trúc tổng thể.                                                                                   │
+│   - Đánh giá chất lượng mã nguồn.                                                                                   │
+│   - Xác định các thành phần dữ liệu.                                                                                │
+│   - Ghi nhận trạng thái hiện tại.                                                                                   │
+│   - Lập báo cáo chi tiết                                                                                            │
+│   - không tự ý hành động ghi đè hay làm gì khi tôi chưa cho phép                                                    │
+│   - **Mục tiêu:** Hiểu rõ dự án, ghi nhớ trạng thái.                                                                │
+│   - **Phạm vi:** Toàn bộ cấu trúc, mã nguồn, dữ liệu.     
+    - **Yêu cầu:** Phân tích kiến trúc, đánh giá code, xác định data, ghi nhận state.                                 │
+│   - **Kết quả:** Báo cáo chi tiết.                                                                                  │
+│   - **Hành động:** Không tự ý thay đổi.   

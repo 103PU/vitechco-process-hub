@@ -1,0 +1,41 @@
+Tuần 4: Độ tin cậy, polish, và chuẩn bị phát hành
+   •  Hardening
+     •  Rà soát bảo mật: chặn IDOR, kiểm tra upload MIME/size, scan virus (nếu khả thi) trước lưu.
+     •  Rate-limit server actions nhạy cảm (xóa, import).
+   •  UX polish
+     •  Empty states, error boundaries, trạng thái loading rõ ràng.
+     •  Keyboard shortcuts cơ bản (search focus, save).
+   •  Testing & Hiệu năng
+     •  Kiểm thử hồi quy: Jest + RTL cho form/document flow; test server actions với prisma test DB.
+     •  Kiểm tra Lighthouse (FCP/TTI), tối ưu bundles (analyze, code-split, tree-shake icons).
+   •  Triển khai
+     •  CI lint+test; build preview; cấu hình env cho prod.
+     •  Migration prod + seed danh mục; bật backup DB.
+     •  Hướng dẫn onboard nội bộ (ngắn gọn): cách import, cách tạo checklist, phân quyền.
+
+   Hạng mục chuyên sâu & kết quả mong đợi
+   •  Data fidelity & định dạng: Import giữ cấu trúc (heading/list/table), lưu file gốc + HTML sạch; preview
+       tải nhanh (<300ms metadata, <2s load nội dung).
+   •  Checklist & luồng kỹ thuật: Bảng bước có trạng thái, reorder, lưu tiến độ; lộ trình cho 1 ca làm việc
+      ghép nhiều quy trình.
+   •  Quản trị & RBAC: ADMIN full CRUD danh mục, tài liệu, user; TECHNICIAN chỉ đọc/thực thi; audit log tối
+      thiểu.
+   •  Hiệu năng & nhẹ: Pagination + SWR cache; tránh over-render; CDN assets; DB index; target FCP <2s.
+   •  Triển khai an toàn: CI/CD với lint+test; migration có backup; env tách biệt; logging + cảnh báo lỗi cơ
+       bản.
+
+   Xác thực & đo lường
+   •  Hiệu năng: Lighthouse ≥ 90 (perf); TTFB < 500ms trang chủ; danh sách tài liệu filter < 300ms.
+   •  Tính năng: Import 1000 tài liệu không lỗi; checklist lưu tiến độ ổn định; RBAC không lọt quyền (manual
+       pen-test vai trò).
+   •  UX: Nghiệm thu nội bộ với kỹ thuật viên: ≤2 click để mở quy trình mong muốn; thời gian tìm kiếm giảm
+      ≥50% so với trước.
+   •  Độ tin cậy: 0 error trong log sau 1 ngày chạy thử; backup DB hoạt động.
+
+   Ưu tiên thực thi (MoSCoW rút gọn)
+   •  Must: RBAC + guard server actions, import + giữ định dạng cơ bản, checklist/steps, search+filter,
+      pagination/index, file storage S3.
+   •  Should: Lộ trình ca làm việc, audit log, structured logging, skeletons/lazy load, brand/model
+      taxonomy.
+   •  Could: Keyboard shortcuts, virus scan uploads, PDF text extraction nâng cao, báo cáo tiến độ.
+   •  Won’t (tháng này): Realtime collaborative editing, offline-first, advanced analytics BI.

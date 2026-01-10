@@ -1,0 +1,78 @@
+# Node.js dependencies
+node_modules/
+
+# Next.js build output
+.next/
+
+# SWC cache
+.swc/
+
+# IDE/editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build outputs
+build/
+dist/
+out/
+
+# Test and debug artifacts
+test/
+tests/
+*.test.ts
+*.test.tsx
+*.log
+debug/
+
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.local
+*.local.*
+*.pem
+*.key
+*.crt
+
+# Temporary files and folders
+tmp/
+temp/
+*.tmp
+
+# Documentation and markdown
+*.md
+README*
+CODEBASE_ANALYSIS_REPORT.md
+CHANGELOG.md
+TEST_VERIFICATION_PLAN.md
+
+# Docker and Compose files
+# Keep Dockerfile/compose available for builds; ignore extra compose artifacts if needed
+docker-compose*.yml
+
+# Project-specific
+.gemini-clipboard/
+
+# Prisma generated files (if any)
+prisma/migrations/*/migration.sql
+prisma/migration_lock.toml
+
+# Miscellaneous
+.prettierrc
+
+# Ignore empty directories (optional, handled by Docker by default)
+# **/.empty
+
+# Exclude public assets from ignore (if needed for build)
+!public/
+
+# Exclude source code (should be included)
+!src/

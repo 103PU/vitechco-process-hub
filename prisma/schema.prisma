@@ -1,0 +1,297 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---- AUTHENTICATION MODELS (Required by NextAuth) ----
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("TECHNICIAN")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  workSessions WorkSession[]
+
+  // Week 1
+  auditLogs        AuditLog[]
+  documentVersions DocumentVersion[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---- APPLICATION MODELS ----
+
+// Core model for each document/procedure
+model Document {
+  id               String   @id @default(cuid())
+  title            String
+  content          String
+  originalFilePath String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  documentType   DocumentType? @relation(fields: [documentTypeId], references: [id])
+  documentTypeId String?
+
+  // Level 3: Specific Topic (e.g., "Vệ sinh", "Cài đặt")
+  topic   DocumentTopic? @relation(fields: [topicId], references: [id])
+  topicId String?
+
+  // Many-to-many relationship with Machine Models
+  machineModels DocumentOnMachineModel[]
+
+  // Many-to-many relationship with Tags
+  tags DocumentOnTag[]
+
+  // Many-to-many relationship with Departments
+  departments DocumentOnDepartment[]
+
+  // Store steps for interactive checklists
+  steps Step[]
+
+  // Week 1: History & Assets
+  versions   DocumentVersion[]
+  fileAssets FileAsset[]
+
+  // Week 3
+  workSessionItems WorkSessionItem[]
+  // @@index([slug]) // Slug doesn't exist on Document in this schema? Check.
+
+  // Performance indexes
+  @@index([title])
+  @@index([createdAt])
+  @@index([documentTypeId])
+  @@index([topicId])
+  @@index([updatedAt])
+}
+
+// Represents an interactive step in a procedure
+model Step {
+  id          String   @id @default(cuid())
+  description String
+  order       Int
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId  String
+
+  @@unique([documentId, order])
+}
+
+// Type of document, e.g., "Quy trình", "Lịch sử lỗi"
+model DocumentType {
+  id        String          @id @default(cuid())
+  name      String          @unique
+  documents Document[]
+  topics    DocumentTopic[]
+}
+
+model DocumentTopic {
+  id         String       @id @default(cuid())
+  name       String // e.g., "Vệ sinh", "Cài đặt"
+  slug       String       @unique
+  category   DocumentType @relation(fields: [categoryId], references: [id])
+  categoryId String
+  documents  Document[]
+
+  @@unique([categoryId, name]) // Unique name per category
+}
+
+// Machine brand, e.g., "Ricoh", "Toshiba"
+model Brand {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  machineModels MachineModel[]
+}
+
+// Specific machine model
+model MachineModel {
+  id   String @id @default(cuid())
+  name String @unique // e.g., "MPC 3004", "MPW 2401"
+
+  brand   Brand?  @relation(fields: [brandId], references: [id])
+  brandId String?
+
+  // Many-to-many relationship with Documents
+  documents DocumentOnMachineModel[]
+}
+
+// Generic tags for additional metadata, e.g., "SC Code", "Belt"
+model Tag {
+  id        String          @id @default(cuid())
+  name      String          @unique
+  documents DocumentOnTag[]
+}
+
+// Departments within the company, e.g., "Kỹ thuật", "IT", "Sale"
+model Department {
+  id          String                 @id @default(cuid())
+  name        String                 @unique
+  code        String                 @default("UNKNOWN") // Added for Cost Center code
+  description String? // Added for description
+  documents   DocumentOnDepartment[]
+}
+
+// ---- WEEK 1 ADDITIONS ----
+
+model FileAsset {
+  id           String   @id @default(cuid())
+  originalName String
+  mime         String
+  size         Int
+  hash         String   @unique
+  storagePath  String
+  bucket       String
+  createdAt    DateTime @default(now())
+
+  // Optional: Link to a specific document if it's a direct attachment
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id])
+}
+
+model DocumentVersion {
+  id        String   @id @default(cuid())
+  version   Int
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // Optional: snapshot of file assets if needed, or link to specific file asset used in this version?
+  // User request: "fileAssetId?"
+  fileAssetId String?
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  entity    String
+  entityId  String
+  payload   String?
+  createdAt DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt(sort: Desc)])
+}
+
+// Join table for Document and MachineModel
+model DocumentOnMachineModel {
+  document       Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId     String
+  machineModel   MachineModel @relation(fields: [machineModelId], references: [id], onDelete: Cascade)
+  machineModelId String
+
+  @@id([documentId, machineModelId])
+}
+
+// Join table for Document and Tag
+model DocumentOnTag {
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId      String
+
+  @@id([documentId, tagId])
+}
+
+// Join table for Document and Department
+model DocumentOnDepartment {
+  document     Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId   String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentId String
+
+  @@id([documentId, departmentId])
+}
+
+// ---- WEEK 3 ADDITIONS: WORK SESSIONS ----
+
+model WorkSession {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String? // Optional title, e.g. "Bảo trì máy MPC 3054"
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  status    String    @default("OPEN") // OPEN, COMPLETED, CANCELLED
+
+  items WorkSessionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model WorkSessionItem {
+  id            String      @id @default(cuid())
+  workSessionId String
+  workSession   WorkSession @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id])
+
+  status       String  @default("PENDING") // PENDING, IN_PROGRESS, DONE
+  progressJson String? // JSON string storing checklist state: { "step_1": true }
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([workSessionId])
+}
