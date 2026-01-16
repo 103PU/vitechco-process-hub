@@ -63,3 +63,5 @@ tmp/
 *.tar.gz
 *.7z
 prisma/dev.db.backup
+
+.vercel

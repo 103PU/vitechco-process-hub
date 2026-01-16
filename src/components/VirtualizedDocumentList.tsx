@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { List } from 'react-window';
+import { FixedSizeList as List } from 'react-window';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

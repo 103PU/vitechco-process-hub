@@ -20,6 +20,11 @@ export type CategoryGroup = {
   topicGroups: TopicGroup[];
 };
 
+export type TagGroup = {
+  tag: Tag | null;
+  docs: FullDocument[];
+};
+
 /**
  * Group documents by Category (DocumentType) -> Topic (DocumentTopic)
  */
