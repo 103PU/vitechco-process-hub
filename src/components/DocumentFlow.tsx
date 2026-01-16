@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
 
 // Utils & Components
-import { FullDocument, groupDocumentsByCategoryAndTopic } from '@/features/documents/utils/grouping';
+import { FullDocument, groupDocumentsByCategoryAndTopic } from '@/features/documents/utils/doc-grouping';
 import { HomeCategorySection } from '@/features/documents/components/home/HomeCategorySection';
 import { DepartmentTabs } from './DepartmentTabs';
 

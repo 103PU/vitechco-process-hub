@@ -1,6 +1,6 @@
 import { useState, Fragment } from 'react';
 import { ChevronRight, ChevronUp, LayoutGrid, Minimize2 } from 'lucide-react';
-import { TypeGroup } from '../../utils/grouping';
+import { TypeGroup } from '../../utils/doc-grouping';
 import { HomeTagCompact, HomeTagExpanded } from './HomeTagSection';
 import { getDocumentTypeIcon } from '../../utils/ui-helpers';
 import { useGridColumns } from '@/hooks/use-grid-columns';

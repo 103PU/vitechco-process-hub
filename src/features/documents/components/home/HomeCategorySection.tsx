@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronRight, Folder, FileText, Settings, Layers, Box } from 'lucide-react';
-import { CategoryGroup, FullDocument } from '../../utils/grouping';
+import { CategoryGroup, FullDocument } from '../../utils/doc-grouping';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
