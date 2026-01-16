@@ -35,7 +35,7 @@ export type UserData = {
     name: string
     email: string
     image: string | null
-    role: Role
+    role: string
     createdAt: string
 }
 
@@ -77,7 +77,7 @@ export const columns: ColumnDef<UserData>[] = [
         accessorKey: "role",
         header: "Vai trò",
         cell: ({ row }) => {
-            const role = row.getValue("role") as Role
+            const role = row.getValue("role") as string
             const isAdmin = role === 'ADMIN'
             return (
                 <Badge
