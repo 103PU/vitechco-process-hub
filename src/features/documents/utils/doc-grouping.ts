@@ -25,6 +25,11 @@ export type TagGroup = {
   docs: FullDocument[];
 };
 
+export type TypeGroup = {
+  type: DocumentType | null;
+  tagGroups: TagGroup[];
+};
+
 /**
  * Group documents by Category (DocumentType) -> Topic (DocumentTopic)
  */
