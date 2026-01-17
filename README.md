@@ -1,0 +1,123 @@
+# VINTECHCO Hub
+
+Hệ thống quản lý quy trình kỹ thuật, tài liệu, và nhân sự chuyên nghiệp dành cho VINTECHCO.
+
+![Vintechco Logo](public/window.svg) <!-- Thay bằng logo thực tế nếu có -->
+
+## 🚀 Giới thiệu
+
+VINTECHCO Hub là một ứng dụng web Enterprise-grade được xây dựng để số hóa quy trình làm việc của đội ngũ kỹ thuật. Hệ thống giúp:
+- **Quản lý tập trung**: Lưu trữ quy trình, tài liệu, báo cáo tại một nơi duy nhất.
+- **Chuẩn hóa quy trình**: Biến các file Word/Excel thành checklist tương tác.
+- **Tra cứu thông minh**: Tìm kiếm nhanh chóng theo bộ phận, dòng máy, tags.
+- **Phân quyền chặt chẽ**: Hệ thống quản trị viên (Admin) và kỹ thuật viên (Technician).
+
+## 🛠️ Công nghệ (Tech Stack)
+
+Dự án được xây dựng trên nền tảng công nghệ hiện đại nhất (2024-2025):
+
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router, Server Actions)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/) (Google OAuth)
+- **UI Library**: [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **Data Table**: [TanStack Table](https://tanstack.com/table/v8)
+- **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
+- **Drag & Drop**: [dnd-kit](https://dndkit.com/)
+
+## 📂 Kiến trúc Dự án (Feature-based Architecture)
+
+Dự án tuân theo kiến trúc hướng tính năng (Feature-based) kết hợp với phân tầng (Layered):
+
+```
+src/
+├── app/                    # Next.js App Router (Routes)
+│   ├── admin/              # Admin Dashboard routes
+│   ├── api/                # API Endpoints
+│   ├── docs/               # Public Document routes
+│   └── page.tsx            # Home page
+├── features/               # Business Logic Modules
+│   ├── documents/          # Document Management Module
+│   │   ├── components/     # UI Components specific to documents
+│   │   ├── services/       # Business logic & DB interaction
+│   │   └── actions.ts      # Server Actions
+│   └── users/              # User Management Module
+├── components/             # Shared UI Components (Button, Input...)
+├── lib/                    # Core utilities (Prisma client, helper functions)
+└── styles/                 # Global styles
+```
+
+## ⚙️ Cài đặt & Chạy dự án
+
+### Yêu cầu tiên quyết
+- Node.js 18+
+- Docker (để chạy PostgreSQL)
+
+### Bước 1: Clone và Cài đặt dependencies
+```bash
+git clone <repo_url>
+cd vintechco-hub
+npm install
+```
+
+### Bước 2: Cấu hình Môi trường
+Tạo file `.env` và `.env.local` dựa trên mẫu. Cần cung cấp:
+- `DATABASE_URL`: Chuỗi kết nối PostgreSQL.
+- `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET`: Cho chức năng đăng nhập.
+- `NEXTAUTH_SECRET`: Khóa bí mật cho session.
+
+### Bước 3: Khởi chạy Database
+```bash
+docker-compose up -d
+npx prisma generate
+npx prisma migrate dev
+```
+
+### Bước 4: Chạy Server phát triển
+```bash
+npm run dev
+```
+Truy cập `http://localhost:3000`.
+
+## 📜 Các lệnh Scripts quan trọng
+
+- `npm run dev`: Chạy server dev.
+- `npm run build`: Build production.
+- `npm run start`: Chạy server production.
+- `npm run db:seed`: Khởi tạo dữ liệu mẫu (Loại tài liệu).
+- `npm run db:cleanup`: Dọn dẹp dữ liệu rác.
+- `npm run import:data`: Nhập liệu từ file Word/Excel (cũ).
+
+## 🛡️ Security & Access Control
+
+Hệ thống áp dụng mô hình bảo mật đa lớp:
+
+1.  **Authentication**: Sử dụng NextAuth.js (Session JWT).
+2.  **Authorization (RBAC)**:
+    - **Server Actions**: Mọi mutation (`create`, `update`, `delete`) đều được bảo vệ bởi `getServerSession`.
+    - **Role Check**: Chỉ `ADMIN` mới có quyền quản lý Users.
+3.  **Data Validation**: 100% dữ liệu đầu vào được validate bằng `Zod` schema trước khi chạm vào Database.
+
+## 🧪 Testing Strategy
+
+Dự án áp dụng chiến lược kiểm thử tập trung vào **Behavior & Security Verification**:
+
+- **Framework**: Jest + React Testing Library.
+- **Verification Plan**: Xem chi tiết tại `TEST_VERIFICATION_PLAN.md`.
+- **Phạm vi kiểm thử**:
+    - **Security Logic**: Đảm bảo unauthorized users bị chặn (TC-101).
+    - **Business Logic**: Đảm bảo các luồng tạo/sửa/xóa hoạt động đúng (TC-001).
+    - **Transactions**: Đảm bảo tính toàn vẹn dữ liệu khi cập nhật nhiều bảng (TC-004).
+
+Để chạy bộ kiểm thử:
+```bash
+# Chạy toàn bộ tests
+npm run test
+
+# Chạy test cho module cụ thể
+npx jest src/features/documents/actions.test.ts
+```
+
+## 📝 License
+VINTECHCO Internal Use Only.
