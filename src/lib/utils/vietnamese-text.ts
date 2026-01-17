@@ -57,7 +57,7 @@ export function normalizeVietnamese(text: string): string {
         result = result.replace(new RegExp(vietnameseChar, 'g'), baseChar);
     }
 
-    return result;
+    return result.toLowerCase();
 }
 
 /**

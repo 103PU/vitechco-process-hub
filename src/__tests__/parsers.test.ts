@@ -1,26 +1,26 @@
-
+import { describe, it, expect, vi } from 'vitest';
 import { DocxParser } from '../lib/parsers/docx-parser';
 import { ExcelParser } from '../lib/parsers/excel-parser';
 import { PdfParser } from '../lib/parsers/pdf-parser';
 import { ParserFactory } from '../lib/parsers/parser-factory';
 
 // Mock dependencies
-jest.mock('mammoth', () => ({
-    convertToHtml: jest.fn().mockResolvedValue({ value: '<p>Mock Docx Content</p>', messages: [] })
+vi.mock('mammoth', () => ({
+    convertToHtml: vi.fn().mockResolvedValue({ value: '<p>Mock Docx Content</p>', messages: [] })
 }));
 
-jest.mock('xlsx', () => ({
-    read: jest.fn().mockReturnValue({
+vi.mock('xlsx', () => ({
+    read: vi.fn().mockReturnValue({
         SheetNames: ['Sheet1'],
         Sheets: { 'Sheet1': {} }
     }),
     utils: {
-        sheet_to_html: jest.fn().mockReturnValue('<table><tr><td>Mock Excel</td></tr></table>')
+        sheet_to_html: vi.fn().mockReturnValue('<table><tr><td>Mock Excel</td></tr></table>')
     }
 }));
 
-jest.mock('pdf-parse', () => {
-    return jest.fn().mockResolvedValue({
+vi.mock('pdf-parse', () => {
+    return vi.fn().mockResolvedValue({
         numpages: 1,
         text: 'Mock PDF Content',
         info: {}
