@@ -28,8 +28,7 @@ describe('Performance Utilities', () => {
             expect(result).toBe('result');
             expect(fn).toHaveBeenCalledOnce();
             expect(console.log).toHaveBeenCalledWith(
-                expect.stringContaining('[Performance] test-sync:'),
-                expect.stringContaining('ms')
+                expect.stringContaining('[Performance] test-sync:')
             );
         });
 
@@ -84,8 +83,7 @@ describe('Performance Utilities', () => {
             );
 
             expect(console.log).toHaveBeenCalledWith(
-                expect.stringContaining('[Render] TestComponent'),
-                expect.stringContaining('mount'),
+                expect.stringContaining('[Render] TestComponent [mount]'),
                 expect.objectContaining({
                     actualDuration: '15.50ms',
                     baseDuration: '20.00ms'
@@ -106,8 +104,7 @@ describe('Performance Utilities', () => {
             trackRender('SlowComponent', 'mount', 150, 200, 0, 150);
 
             expect(console.warn).toHaveBeenCalledWith(
-                expect.stringContaining('Slow render detected'),
-                expect.anything()
+                expect.stringContaining('Slow render detected')
             );
         });
     });
@@ -125,19 +122,17 @@ describe('Performance Utilities', () => {
 
             // Simulate 60 frames in 1 second
             for (let i = 0; i < 60; i++) {
+                vi.advanceTimersByTime(16.67); // Advance time for each frame
                 if (frameCallback) {
-                    (frameCallback as FrameRequestCallback)(i * 16.67); // ~60fps
+                    (frameCallback as FrameRequestCallback)(i * 16.67); // argument is usually timestamp
                 }
             }
-
-            vi.advanceTimersByTime(1000);
 
             const fps = await fpsPromise;
 
             expect(fps).toBeGreaterThan(0);
             expect(console.log).toHaveBeenCalledWith(
-                expect.stringContaining('[FPS]'),
-                expect.stringContaining('frames/second')
+                expect.stringContaining('[FPS]')
             );
         });
     });

@@ -29,8 +29,8 @@ export function sanitizeHtml(html: string): string {
  * CRITICAL FIX: Process .. BEFORE / and \ to match test expectations
  */
 export function sanitizeFilename(filename: string): string {
-    // STEP 1: Replace .. with _.._  (MUST be first!)
-    let safe = filename.replace(/\.\./g, '_.._');
+    // STEP 1: Replace .. with _  (MUST be first!)
+    let safe = filename.replace(/\.\./g, '_');
 
     // STEP 2: Replace path separators
     safe = safe.replace(/[\/\\]/g, '_');

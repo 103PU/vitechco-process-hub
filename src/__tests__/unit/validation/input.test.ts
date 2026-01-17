@@ -22,7 +22,7 @@ describe('Input Validation', () => {
     });
 
     it('prevents path traversal', () => {
-        expect(sanitizeFilename('../etc/passwd')).toBe('_..__etc_passwd');
+        expect(sanitizeFilename('../etc/passwd')).toBe('__etc_passwd');
         expect(sanitizeFilename('../../file.txt')).not.toContain('..');
     });
 

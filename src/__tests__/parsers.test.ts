@@ -5,9 +5,13 @@ import { PdfParser } from '../lib/parsers/pdf-parser';
 import { ParserFactory } from '../lib/parsers/parser-factory';
 
 // Mock dependencies
-vi.mock('mammoth', () => ({
-    convertToHtml: vi.fn().mockResolvedValue({ value: '<p>Mock Docx Content</p>', messages: [] })
-}));
+vi.mock('mammoth', () => {
+    const convertToHtml = vi.fn().mockResolvedValue({ value: '<p>Mock Docx Content</p>', messages: [] });
+    return {
+        default: { convertToHtml },
+        convertToHtml
+    };
+});
 
 vi.mock('xlsx', () => ({
     read: vi.fn().mockReturnValue({
@@ -20,11 +24,14 @@ vi.mock('xlsx', () => ({
 }));
 
 vi.mock('pdf-parse', () => {
-    return vi.fn().mockResolvedValue({
+    const mockPdf = vi.fn().mockResolvedValue({
         numpages: 1,
         text: 'Mock PDF Content',
         info: {}
     });
+    // @ts-ignore
+    mockPdf.default = mockPdf;
+    return mockPdf;
 });
 
 describe('File Parsers', () => {

@@ -1,16 +1,17 @@
 import { DocumentService } from './DocumentService';
 import { prisma } from '@/lib/prisma/client';
+import { vi, describe, it, expect } from 'vitest';
 
 // Mocking Prisma Client
-jest.mock('@/lib/prisma/client', () => ({
+vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     document: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
   },
 }));

@@ -1,46 +1,47 @@
 import { createDocument, updateDocument, updateDocumentTags } from './actions';
 import { prisma } from '@/lib/prisma/client';
 import { getServerSession } from 'next-auth';
+import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 // Mock the dependencies
-jest.mock('@/lib/prisma/client', () => ({
+vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     document: {
-      create: jest.fn(),
-      update: jest.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
     },
     tag: {
-      upsert: jest.fn(),
+      upsert: vi.fn(),
     },
-    $transaction: jest.fn((callback) => callback(prisma)),
+    $transaction: vi.fn((callback) => callback(prisma)),
     documentOnTag: {
-      deleteMany: jest.fn(),
-      createMany: jest.fn(),
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
     }
   },
 }));
 
-jest.mock('next/cache', () => ({
-  revalidatePath: jest.fn(),
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
 }));
 
-jest.mock('next-auth', () => ({
-  getServerSession: jest.fn(),
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
 }));
 
-jest.mock('@/features/auth/config/authOptions', () => ({
+vi.mock('@/features/auth/config/authOptions', () => ({
   authOptions: {},
 }));
 
 describe('Document Actions Verification', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('createDocument (Security & Logic)', () => {
     it('TC-101: Should BLOCK unauthenticated users (Security Check)', async () => {
       // Simulate NO session
-      (getServerSession as jest.Mock).mockResolvedValue(null);
+      (getServerSession as any).mockResolvedValue(null);
 
       const validData = {
         title: 'Valid Document Title',
@@ -57,15 +58,15 @@ describe('Document Actions Verification', () => {
 
     it('TC-001: Should ALLOW authorized users to create documents', async () => {
       // Simulate VALID session
-      (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'user-1' } });
+      (getServerSession as any).mockResolvedValue({ user: { id: 'user-1' } });
 
       const validData = {
         title: 'Valid Document Title',
         content: 'This is valid content > 10 chars',
         documentTypeId: 'type-123',
       };
-      
-      (prisma.document.create as jest.Mock).mockResolvedValue(validData);
+
+      (prisma.document.create as any).mockResolvedValue(validData);
 
       const result = await createDocument(validData);
 
@@ -75,7 +76,7 @@ describe('Document Actions Verification', () => {
 
     it('TC-003: Should create document with relations (Tags, Depts)', async () => {
       // Simulate VALID session
-      (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'user-1' } });
+      (getServerSession as any).mockResolvedValue({ user: { id: 'user-1' } });
 
       const complexData = {
         title: 'Complex Doc',
@@ -85,13 +86,13 @@ describe('Document Actions Verification', () => {
         departmentIds: ['dept-1'],
         machineModelIds: []
       };
-      
-      (prisma.document.create as jest.Mock).mockResolvedValue({ id: 'new-id' });
+
+      (prisma.document.create as any).mockResolvedValue({ id: 'new-id' });
 
       const result = await createDocument(complexData);
 
       expect(result.success).toBe(true);
-      
+
       // Verify the nested create structure
       expect(prisma.document.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -113,7 +114,7 @@ describe('Document Actions Verification', () => {
 
     it('TC-002: Should fail validation if title is too short (Authorized)', async () => {
       // Simulate VALID session
-      (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'user-1' } });
+      (getServerSession as any).mockResolvedValue({ user: { id: 'user-1' } });
 
       const invalidData = {
         title: 'No', // < 3 chars
@@ -131,30 +132,30 @@ describe('Document Actions Verification', () => {
 
   describe('updateDocumentTags (TC-004)', () => {
     it('TC-004: Should execute transaction to update tags (Authorized)', async () => {
-        // Simulate VALID session
-        (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'user-1' } });
+      // Simulate VALID session
+      (getServerSession as any).mockResolvedValue({ user: { id: 'user-1' } });
 
-        const docIds = ['doc-1'];
-        const tagNames = ['Tag A', 'Tag B'];
+      const docIds = ['doc-1'];
+      const tagNames = ['Tag A', 'Tag B'];
 
-        // Mock transaction behavior
-        (prisma.tag.upsert as jest.Mock).mockResolvedValue({ id: 'tag-id' });
-        
-        const result = await updateDocumentTags(docIds, tagNames);
+      // Mock transaction behavior
+      (prisma.tag.upsert as any).mockResolvedValue({ id: 'tag-id' });
 
-        expect(prisma.$transaction).toHaveBeenCalled();
-        expect(result.success).toBe(true);
+      const result = await updateDocumentTags(docIds, tagNames);
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(result.success).toBe(true);
     });
 
     it('Should block unauthenticated tag updates', async () => {
-        // Simulate NO session
-        (getServerSession as jest.Mock).mockResolvedValue(null);
-        
-        const result = await updateDocumentTags(['doc-1'], ['Tag A']);
-        
-        expect(result.success).toBe(false);
-        expect(result.error).toContain("Bạn cần đăng nhập");
-        expect(prisma.$transaction).not.toHaveBeenCalled();
+      // Simulate NO session
+      (getServerSession as any).mockResolvedValue(null);
+
+      const result = await updateDocumentTags(['doc-1'], ['Tag A']);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Bạn cần đăng nhập");
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
   });
 });

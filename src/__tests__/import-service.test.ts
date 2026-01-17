@@ -5,31 +5,31 @@ import { PrismaClient } from '@prisma/client';
 import { ClassificationService } from '../lib/classification';
 
 // Mock everything
-vi.mock('@prisma/client', () => ({
-    PrismaClient: vi.fn().mockImplementation(() => ({
-        fileAsset: { findUnique: vi.fn(), upsert: vi.fn() },
-        document: { findFirst: vi.fn(), upsert: vi.fn() },
-        tag: { upsert: vi.fn() },
-        $transaction: vi.fn((callback) => callback({
-            fileAsset: { upsert: vi.fn().mockResolvedValue({ id: 'asset-1' }) },
-            tag: { upsert: vi.fn() },
-            document: { upsert: vi.fn().mockResolvedValue({ id: 'doc-1' }) }
-        })),
-        $disconnect: vi.fn()
-    }))
-}));
+vi.mock('@prisma/client', () => {
+    return {
+        PrismaClient: class {
+            fileAsset = { findUnique: vi.fn(), upsert: vi.fn() };
+            document = { findFirst: vi.fn(), upsert: vi.fn() };
+            tag = { upsert: vi.fn() };
+            $transaction = vi.fn((callback) => callback(this));
+            $disconnect = vi.fn();
+        }
+    };
+});
 
-vi.mock('../lib/classification', () => ({
-    ClassificationService: vi.fn().mockImplementation(() => ({
-        classifyFromSegments: vi.fn().mockResolvedValue({
-            topic: { id: 'topic-1', name: 'Topic 1' },
-            category: { id: 'cat-1', name: 'Cat 1' },
-            department: { id: 'dept-1', name: 'Dept 1' },
-            model: { id: 'model-1', name: 'Model 1' },
-            tags: ['tag1']
-        })
-    }))
-}));
+vi.mock('../lib/classification', () => {
+    return {
+        ClassificationService: class {
+            classifyFromSegments = vi.fn().mockResolvedValue({
+                topic: { id: 'topic-1', name: 'Topic 1' },
+                category: { id: 'cat-1', name: 'Cat 1' },
+                department: { id: 'dept-1', name: 'Dept 1' },
+                model: { id: 'model-1', name: 'Model 1' },
+                tags: ['tag1']
+            });
+        }
+    };
+});
 
 vi.mock('../lib/parsers/parser-factory', () => ({
     ParserFactory: {

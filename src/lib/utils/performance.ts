@@ -5,7 +5,7 @@
  * Should only be used in development mode.
  */
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
 /**
  * Measure the execution time of a function
@@ -55,6 +55,10 @@ export function trackRender(
         startTime: `${startTime.toFixed(2)}ms`,
         commitTime: `${commitTime.toFixed(2)}ms`,
     });
+
+    if (actualDuration > 16) {
+        console.warn(`[Render] ${id} Slow render detected: ${actualDuration.toFixed(2)}ms`);
+    }
 }
 
 /**
@@ -72,6 +76,8 @@ export function logMemoryUsage() {
             total: `${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
             limit: `${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`,
         });
+    } else {
+        console.warn('Memory API not available');
     }
 }
 
