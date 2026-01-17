@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma/client';
+import { getVersionInfo } from '@/lib/version';
 
 /**
  * Health Check Endpoint
@@ -13,6 +14,9 @@ import { prisma } from '@/lib/prisma/client';
  */
 export async function GET() {
     try {
+        // Get version info for response
+        const versionInfo = getVersionInfo();
+
         // Check database connectivity
         await prisma.$queryRaw`SELECT 1`;
 
