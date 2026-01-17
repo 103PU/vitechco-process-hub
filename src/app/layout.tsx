@@ -7,7 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "VITECHCO Process Hub",
+  title: "VINTECHCO Hub",
   description: "Hệ thống quản lý quy trình kỹ thuật",
 };
 

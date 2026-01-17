@@ -31,7 +31,7 @@ export default function HomePage() {
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className='flex items-center gap-2'>
             <Cpu size={32} className="text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">VITECHCO Process Hub</h1>
+            <h1 className="text-2xl font-bold text-gray-900">VINTECHCO Hub</h1>
           </div>
           {/* SearchForm is a client component, needs Suspense */}
           <Suspense>
