@@ -9,5 +9,5 @@ bạn hãy review và read lại toàn bộ cấu trúc, mã nguồn, data,.. m�
 │   - **Mục tiêu:** Hiểu rõ dự án, ghi nhớ trạng thái.                                                                │
 │   - **Phạm vi:** Toàn bộ cấu trúc, mã nguồn, dữ liệu.     
     - **Yêu cầu:** Phân tích kiến trúc, đánh giá code, xác định data, ghi nhận state.                                 │
-│   - **Kết quả:** Báo cáo chi tiết.                                                                                  │
+│   - **Kết quả:** Báo cáo chi tiết kiến trúc, luật lệ và convetion với tất cả các kiến thức trong hệ thống để người lập trình phải tuân theo.                                                                                  │
 │   - **Hành động:** Không tự ý thay đổi.   
