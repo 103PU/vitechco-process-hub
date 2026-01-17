@@ -34,13 +34,28 @@ Each feature module contains its own:
     - Middleware: Protects `/admin` routes.
     - Server Actions: Explicit `session` checks required.
 
-## 4. 📊 Data Hierarchy (The 4 Levels)
-Strict OOP implementation of the Vintechco process structure:
+## 4. 📊 Data Architecture (Modular Core)
 
-1.  **Department** (Bộ phận): Top level organization.
-2.  **Category** (Phân Mục): Type of content (Quy Trình, Tài Liệu...).
-3.  **Topic** (Loại): Specific subject matter.
-4.  **Document** (Tài liệu): The comprehensive record.
+We utilize a **Modular Core + Extension** pattern to ensure scalability across departments.
+
+### 4.1 Core Model (`Document`)
+Manages universal attributes for *every* file in the system:
+- **Identity**: ID, Title, Content.
+- **Traceability**: Author, CreatedAt, UpdatedAt.
+- **Organization**: Departments (Many-to-Many).
+
+### 4.2 Extension Models (`Metadata`)
+Department-specific fields are stored in separate 1:1 extension tables.
+- **`TechnicalMetadata`**: Stores `machineModels`, `steps`, `documentType`, `tags`.
+  - *Must exist for all Technical documents.*
+- **Future Extensions**: `SalesMetadata`, `HRMetadata`.
+
+### 4.3 The 4-Level Taxonomy
+Strict OOP implementation of the Vintechco process structure (managed via Metadata):
+1.  **Department** (Bộ phận): Top level organization (Core).
+2.  **Category** (Phân Mục): Type of content (Extension - e.g., "Quy Trình").
+3.  **Topic** (Loại): Specific subject matter (Extension - e.g., "Cài đặt").
+4.  **Document** (Tài liệu): The content record (Core).
 
 **Attributes**:
 - **MachineModel**: High-level series groupings (RICOH MP, MPC).
