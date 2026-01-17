@@ -40,13 +40,21 @@ function LoadingSkeleton() {
   );
 }
 
-export default function DocumentFlow() {
+type DocumentFlowProps = {
+  initialDocuments?: FullDocument[];
+};
+
+export default function DocumentFlow({ initialDocuments = [] }: DocumentFlowProps) {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
 
   const apiUrl = `/api/documents?q=${encodeURIComponent(searchQuery)}`;
-  const { data: documents, error, isLoading } = useSWR<FullDocument[]>(apiUrl, fetcher);
+  const { data: documents, error, isLoading } = useSWR<FullDocument[]>(apiUrl, fetcher, {
+    fallbackData: initialDocuments,
+    revalidateOnFocus: false, // Performance: Don't re-fetch immediately on focus if we just loaded SSR data
+    revalidateOnMount: false // Security: Trust server data initially, only fetch if query changes
+  });
 
   // Extract unique departments from data for tabs
   const departments = useMemo(() => {

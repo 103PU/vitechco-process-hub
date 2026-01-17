@@ -8,6 +8,8 @@ import { authOptions } from '@/features/auth/config/authOptions'
 import { Prisma } from '@prisma/client'
 import slugify from 'slugify'
 
+import { FullDocument } from './utils/doc-grouping';
+
 const documentSchema = z.object({
     title: z.string().min(3),
     content: z.string().min(10),
@@ -16,6 +18,49 @@ const documentSchema = z.object({
     departmentIds: z.array(z.string()).optional(),
     machineModelIds: z.array(z.string()).optional(),
 })
+
+/**
+ * Fetch all documents for the homepage (Server-Side Prefetching)
+ * Optimized for LCP by running on the server.
+ */
+export async function getDocumentsForHome(): Promise<FullDocument[]> {
+    try {
+        // Note: We use the same query logic as GET /api/documents but directly via Prisma
+        // This avoids the HTTP roundtrip and enables direct database access
+        const docs = await prisma.document.findMany({
+            include: {
+                departments: {
+                    include: {
+                        department: true
+                    }
+                },
+                documentType: true,
+                topic: true,
+                tags: {
+                    include: {
+                        tag: true
+                    }
+                },
+                fileAssets: true,
+                machineModels: {
+                    include: {
+                        machineModel: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        // Transform to match FullDocument interface if necessary (Prisma return type usually matches closely)
+        // The include structure above matches FullDocument type
+        return docs as unknown as FullDocument[];
+    } catch (error) {
+        console.error('Failed to prefetch home documents:', error);
+        return [];
+    }
+}
 
 export async function createDocument(data: unknown) {
     const session = await getServerSession(authOptions);

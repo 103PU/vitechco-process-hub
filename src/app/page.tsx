@@ -3,6 +3,7 @@ import { SearchForm } from '@/components/SearchForm';
 import DocumentFlow from '@/components/DocumentFlow'; // The new client component
 import AuthButton from '@/components/AuthButton'; // Import the AuthButton
 import { Cpu } from 'lucide-react';
+import { getDocumentsForHome } from '@/features/documents/actions'; // Import server action
 
 // A simple loading skeleton for the main content
 function MainContentSkeleton() {
@@ -24,7 +25,10 @@ function MainContentSkeleton() {
 }
 
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Prefetch data on the server
+  const initialDocuments = await getDocumentsForHome();
+
   return (
     <div className="bg-gray-100 min-h-screen">
       <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -44,7 +48,7 @@ export default function HomePage() {
       <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* DocumentFlow handles its own data fetching and loading states */}
         <Suspense fallback={<MainContentSkeleton />}>
-          <DocumentFlow />
+          <DocumentFlow initialDocuments={initialDocuments} />
         </Suspense>
       </main>
     </div>
