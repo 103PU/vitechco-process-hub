@@ -3,7 +3,6 @@ import { SearchForm } from '@/components/SearchForm';
 import DocumentFlow from '@/components/DocumentFlow'; // The new client component
 import AuthButton from '@/components/AuthButton'; // Import the AuthButton
 import { Cpu } from 'lucide-react';
-import { Analytics } from "@vercel/analytics/react";
 
 // A simple loading skeleton for the main content
 function MainContentSkeleton() {

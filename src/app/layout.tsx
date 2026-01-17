@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/NextAuthProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <NextAuthProvider>
           <ErrorBoundary>
             {children}
+            <Analytics />
           </ErrorBoundary>
         </NextAuthProvider>
       </body>
