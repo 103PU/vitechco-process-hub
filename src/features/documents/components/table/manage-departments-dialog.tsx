@@ -5,21 +5,21 @@ import { Check, PlusCircle, Building } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
 } from "@/components/ui/command"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { getAllDepartments, updateDocumentDepartments, createDepartment } from "../../actions"
@@ -67,7 +67,7 @@ export function ManageDepartmentsDialog({ documentIds, initialDepartments, child
             const newDept = { id: tempId, name: inputValue };
             setAllDepartments(prev => [...prev, newDept]);
             setSelectedDepts(prev => [...prev, newDept]);
-            
+
             // Server creation (optional here, but handled in updateDocumentDepartments)
         }
         setInputValue("")
@@ -77,7 +77,7 @@ export function ManageDepartmentsDialog({ documentIds, initialDepartments, child
         setIsLoading(true);
         const deptNames = selectedDepts.map(d => d.name);
         const result = await updateDocumentDepartments(documentIds, deptNames);
-        if(result.success) {
+        if (result.success) {
             toast.success("Cập nhật bộ phận thành công!");
         } else {
             toast.error("Đã có lỗi xảy ra.");
@@ -111,9 +111,9 @@ export function ManageDepartmentsDialog({ documentIds, initialDepartments, child
                             </button>
                         </Badge>
                     ))}
-                     <Command className="p-0 m-0 w-full">
-                        <CommandInput 
-                            placeholder="Thêm bộ phận..." 
+                    <Command className="p-0 m-0 w-full">
+                        <CommandInput
+                            placeholder="Thêm bộ phận..."
                             value={inputValue}
                             onValueChange={setInputValue}
                             onKeyDown={(e) => {
@@ -127,24 +127,24 @@ export function ManageDepartmentsDialog({ documentIds, initialDepartments, child
                             {inputValue && filteredDepts.length > 0 && <CommandEmpty>Không tìm thấy.</CommandEmpty>}
                             {filteredDepts.length > 0 && (
                                 <CommandGroup>
-                                {filteredDepts
-                                    .filter(d => d.name.toLowerCase().includes(inputValue.toLowerCase()))
-                                    .map((dept) => (
-                                    <CommandItem
-                                        key={dept.id}
-                                        value={dept.name}
-                                        onSelect={() => handleSelect(dept)}
-                                    >
-                                        {dept.name}
-                                    </CommandItem>
-                                ))}
+                                    {filteredDepts
+                                        .filter(d => d.name.toLowerCase().includes(inputValue.toLowerCase()))
+                                        .map((dept) => (
+                                            <CommandItem
+                                                key={dept.id}
+                                                value={dept.name}
+                                                onSelect={() => handleSelect(dept)}
+                                            >
+                                                {dept.name}
+                                            </CommandItem>
+                                        ))}
                                 </CommandGroup>
                             )}
-                             {inputValue && !allDepartments.some(d => d.name.toLowerCase() === inputValue.toLowerCase()) && (
+                            {inputValue && !allDepartments.some(d => d.name.toLowerCase() === inputValue.toLowerCase()) && (
                                 <CommandGroup>
                                     <CommandItem onSelect={handleCreate}>
                                         <PlusCircle className="mr-2 h-4 w-4" />
-                                        Tạo mới "{inputValue}"
+                                        Tạo mới &quot;{inputValue}&quot;
                                     </CommandItem>
                                 </CommandGroup>
                             )}

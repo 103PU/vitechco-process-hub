@@ -6,21 +6,21 @@ import { Check, PlusCircle, Tag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
 } from "@/components/ui/command"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { getAllTags, updateDocumentTags } from "../../actions"
@@ -75,7 +75,7 @@ export function ManageTagsDialog({ documentIds, initialTags, children }: ManageT
         setIsLoading(true);
         const tagNames = selectedTags.map(t => t.name);
         const result = await updateDocumentTags(documentIds, tagNames);
-        if(result.success) {
+        if (result.success) {
             toast.success("Cập nhật tags thành công!");
         } else {
             toast.error("Đã có lỗi xảy ra.");
@@ -109,9 +109,9 @@ export function ManageTagsDialog({ documentIds, initialTags, children }: ManageT
                             </button>
                         </Badge>
                     ))}
-                     <Command className="p-0 m-0 w-full">
-                        <CommandInput 
-                            placeholder="Thêm tag..." 
+                    <Command className="p-0 m-0 w-full">
+                        <CommandInput
+                            placeholder="Thêm tag..."
                             value={inputValue}
                             onValueChange={setInputValue}
                             onKeyDown={(e) => {
@@ -125,24 +125,24 @@ export function ManageTagsDialog({ documentIds, initialTags, children }: ManageT
                             {inputValue && filteredTags.length > 0 && <CommandEmpty>Không tìm thấy tag.</CommandEmpty>}
                             {filteredTags.length > 0 && (
                                 <CommandGroup>
-                                {filteredTags
-                                    .filter(tag => tag.name.toLowerCase().includes(inputValue.toLowerCase()))
-                                    .map((tag) => (
-                                    <CommandItem
-                                        key={tag.id}
-                                        value={tag.name}
-                                        onSelect={() => handleTagSelect(tag)}
-                                    >
-                                        {tag.name}
-                                    </CommandItem>
-                                ))}
+                                    {filteredTags
+                                        .filter(tag => tag.name.toLowerCase().includes(inputValue.toLowerCase()))
+                                        .map((tag) => (
+                                            <CommandItem
+                                                key={tag.id}
+                                                value={tag.name}
+                                                onSelect={() => handleTagSelect(tag)}
+                                            >
+                                                {tag.name}
+                                            </CommandItem>
+                                        ))}
                                 </CommandGroup>
                             )}
-                             {inputValue && !allTags.some(t => t.name.toLowerCase() === inputValue.toLowerCase()) && (
+                            {inputValue && !allTags.some(t => t.name.toLowerCase() === inputValue.toLowerCase()) && (
                                 <CommandGroup>
                                     <CommandItem onSelect={handleCreateTag}>
                                         <PlusCircle className="mr-2 h-4 w-4" />
-                                        Tạo mới "{inputValue}"
+                                        Tạo mới &quot;{inputValue}&quot;
                                     </CommandItem>
                                 </CommandGroup>
                             )}

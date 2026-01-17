@@ -13,7 +13,7 @@ export interface ImportResult {
     status: 'skipped' | 'success' | 'error';
     documentId?: string;
     message?: string;
-    classification?: any; // Avoiding circular dependency complexity for now
+    classification?: unknown; // Avoiding circular dependency complexity for now
 }
 
 export class ImportService {
@@ -44,8 +44,9 @@ export class ImportService {
         try {
             const useAI = mode === 'full';
             classification = await this.classifier.classifyFromSegments(pathStack, fileName, useAI);
-        } catch (err: any) {
-            return { status: 'error', message: `Classification failed: ${err.message}` };
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            return { status: 'error', message: `Classification failed: ${errorMessage}` };
         }
 
         const title = this.cleanName(fileName.replace(path.extname(fileName), ''));
@@ -71,14 +72,14 @@ export class ImportService {
         if (parser) {
             try {
                 parsedContent = await parser.parse(fileContent, fileName, mimeType);
-            } catch (e) {
+            } catch (_e) {
                 console.warn(`Parser failed for ${fileName}, falling back to default.`);
             }
         }
 
         // 4. Upload to S3 (if new asset)
         let storagePath = existingAsset?.storagePath;
-        let bucket = existingAsset?.bucket || process.env.S3_BUCKET || 'vitechco-assets';
+        const bucket = existingAsset?.bucket || process.env.S3_BUCKET || 'vitechco-assets';
 
         if (!existingAsset) {
             const key = `import/${Date.now()}-${slugify(fileName, { lower: true })}`;
@@ -88,6 +89,7 @@ export class ImportService {
 
         // 5. Transactional Save
         try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const doc = await this.prisma.$transaction(async (tx: any) => {
                 // Upsert Asset
                 const asset = await tx.fileAsset.upsert({
@@ -157,8 +159,9 @@ export class ImportService {
 
             return { status: 'success', documentId: doc.id, classification: classification };
 
-        } catch (err: any) {
-            return { status: 'error', message: `DB Transaction failed: ${err.message}` };
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            return { status: 'error', message: `DB Transaction failed: ${errorMessage}` };
         }
     }
 

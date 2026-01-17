@@ -39,8 +39,8 @@ export class ClassificationService {
         }
 
         let [deptName, catName, topicName] = pathSegments;
-        let brandNameCandidate = pathSegments.length > 3 ? pathSegments[3] : undefined;
-        let modelNameCandidate = pathSegments.length > 4 ? pathSegments[4] : undefined;
+        const brandNameCandidate = pathSegments.length > 3 ? pathSegments[3] : undefined;
+        const modelNameCandidate = pathSegments.length > 4 ? pathSegments[4] : undefined;
         let extraTags = pathSegments.slice(5);
 
         let finalBrandName: string | undefined;
@@ -140,7 +140,7 @@ export class ClassificationService {
         }
 
         let brand: Brand | undefined;
-        let models: MachineModel[] = [];
+        const models: MachineModel[] = [];
 
         // 4. Attributes (Level 4): Brand & Models (SERIES ONLY)
         if (finalBrandName) {

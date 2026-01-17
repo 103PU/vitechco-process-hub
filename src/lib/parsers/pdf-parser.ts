@@ -9,6 +9,7 @@ export class PdfParser implements IFileParser {
         try {
             // Dynamic import to avoid DOMMatrix error on server-side
             // pdf-parse requires canvas which needs DOMMatrix polyfill
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
             const pdfParse = require('pdf-parse');
             const data = await pdfParse(buffer);
 

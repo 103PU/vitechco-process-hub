@@ -8,7 +8,8 @@ const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY || "minioadmin"
 const S3_BUCKET = process.env.S3_BUCKET || "vitechco-assets"
 
 // Max file size: 100MB
-const MAX_FILE_SIZE_BYTES = (parseInt(process.env.FILE_MAX_SIZE_MB || "100", 10)) * 1024 * 1024
+// Max file size: 100MB
+// const MAX_FILE_SIZE_BYTES = (parseInt(process.env.FILE_MAX_SIZE_MB || "100", 10)) * 1024 * 1024
 
 export const s3Client = new S3Client({
     region: S3_REGION,
@@ -45,8 +46,10 @@ export async function ensureBucketExists() {
             timeoutPromise
         ]);
 
-    } catch (error: any) {
-        if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+    } catch (error: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const err = error as any;
+        if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
             // ... create logic ...
             try {
                 await s3Client.send(new CreateBucketCommand({ Bucket: S3_BUCKET }))
@@ -57,7 +60,8 @@ export async function ensureBucketExists() {
             }
         } else {
             console.warn("⚠️  S3 Unreachable (Timeout or Error). Switching to Dummy Local Mode.");
-            console.warn(`   Error: ${error.message}`);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.warn(`   Error: ${(error as any).message}`);
             isS3Available = false;
             // Do not throw, allow app to continue
         }

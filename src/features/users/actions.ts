@@ -20,6 +20,7 @@ export async function updateUserRole(userId: string, newRole: Role) {
     }
 
     // Prevent admin from de-moting themselves (safety feature)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const actorId = (session.user as any)?.id;
     if (actorId === userId) {
         return { success: false, error: 'Bạn không thể tự thay đổi vai trò của chính mình.' };
@@ -50,6 +51,7 @@ export async function deleteUser(userId: string) {
         return { success: false, error: 'Unauthorized' };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const actorId = (session.user as any)?.id;
     if (actorId === userId) {
         return { success: false, error: 'Bạn không thể xóa chính mình.' };

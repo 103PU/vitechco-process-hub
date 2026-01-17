@@ -34,10 +34,12 @@ export class DocumentService {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async create(data: any) {
     return prisma.document.create({ data });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async update(id: string, data: any) {
     return prisma.document.update({
       where: { id },

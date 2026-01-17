@@ -43,7 +43,7 @@ async function main() {
                 console.log(`⚠️  Refactoring Specific Model: "[${brand.name}] ${model.name}"`);
 
                 // Extract Series (First word)
-                let seriesName = model.name.split(' ')[0]; // e.g., "MPC"
+                const seriesName = model.name.split(' ')[0]; // e.g., "MPC"
                 // If series name is effectively the whole name without numbers (e.g. if name was just "MPC"), we keep it.
                 // But here we know it has space or digits.
 

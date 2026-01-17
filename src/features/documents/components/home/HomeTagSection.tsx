@@ -22,6 +22,7 @@ interface HomeTagExpandedProps extends HomeTagProps {
 export function HomeTagCompact({ group, onClick, isActive }: HomeTagCompactProps) {
     const tagName = group.tag?.name || 'Chung';
     const styles = getTagColorStyles(group.tag?.name);
+    // eslint-disable-next-line react/no-unstable-nested-components
     const Icon = getTagIcon(group.tag?.name);
     const docCount = group.docs.length;
 
@@ -46,6 +47,7 @@ export function HomeTagCompact({ group, onClick, isActive }: HomeTagCompactProps
                 "bg-white shadow-sm border",
                 styles.border, styles.text
             )}>
+                {/* eslint-disable-next-line react/no-unstable-nested-components */}
                 <Icon size={32} strokeWidth={2} />
             </div>
 
@@ -71,6 +73,7 @@ export function HomeTagExpanded({ group, onClose }: HomeTagExpandedProps) {
 
     const tagName = group.tag?.name || 'Chung';
     const styles = getTagColorStyles(group.tag?.name);
+    // eslint-disable-next-line react/no-unstable-nested-components
     const Icon = getTagIcon(group.tag?.name);
 
     // Auto-scroll when mounted if content overflows viewport
@@ -105,6 +108,7 @@ export function HomeTagExpanded({ group, onClose }: HomeTagExpandedProps) {
                         styles.border,
                         styles.text
                     )}>
+                        {/* eslint-disable-next-line react/no-unstable-nested-components */}
                         <Icon size={20} strokeWidth={2.5} />
                         <span className="text-base font-bold uppercase tracking-wider">
                             {tagName}

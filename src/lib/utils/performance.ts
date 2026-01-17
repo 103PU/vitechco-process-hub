@@ -63,7 +63,7 @@ export function trackRender(
 export function logMemoryUsage() {
     if (!isDev || typeof window === 'undefined') return;
 
-    // @ts-ignore - performance.memory is Chrome-specific
+    // @ts-expect-error - performance.memory is Chrome-specific
     const memory = performance.memory;
 
     if (memory) {
