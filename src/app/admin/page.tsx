@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma/client";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/features/auth/config/authOptions";
-import { 
-    FileText, 
-    Users, 
-    CheckCircle2, 
-    Clock, 
-    TrendingUp, 
+import {
+    FileText,
+    Users,
+    CheckCircle2,
+    Clock,
+    TrendingUp,
     Plus,
     Tags
 } from "lucide-react";
@@ -38,12 +38,16 @@ async function getStats(): Promise<Stats> {
         prisma.document.findMany({
             take: 5,
             orderBy: { updatedAt: 'desc' },
-            include: { documentType: true }
+            include: {
+                technicalMetadata: {
+                    include: { documentType: true }
+                }
+            }
         }),
         prisma.documentType.findMany({
             include: {
                 _count: {
-                    select: { documents: true }
+                    select: { technicalMetadataList: true }
                 }
             }
         })
@@ -51,7 +55,9 @@ async function getStats(): Promise<Stats> {
 
     const docsWithSteps = await prisma.document.count({
         where: {
-            steps: { some: {} }
+            technicalMetadata: {
+                steps: { some: {} }
+            }
         }
     });
 
@@ -61,9 +67,14 @@ async function getStats(): Promise<Stats> {
         docCount,
         userCount,
         tagCount,
-        latestDocs,
+        latestDocs: latestDocs.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            updatedAt: d.updatedAt,
+            documentType: d.technicalMetadata?.documentType ? { name: d.technicalMetadata.documentType.name } : null
+        })),
         completionRate,
-        chartData: typesBreakdown.map((t: { name: string; _count: { documents: number } }) => ({ name: t.name, value: t._count.documents }))
+        chartData: typesBreakdown.map((t: any) => ({ name: t.name, value: t._count.technicalMetadataList }))
     };
 }
 

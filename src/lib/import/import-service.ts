@@ -58,7 +58,9 @@ export class ImportService {
         const existingDoc = await this.prisma.document.findFirst({
             where: {
                 title,
-                topicId: classification.topic.id
+                technicalMetadata: {
+                    topicId: classification.topic.id
+                }
             }
         });
 
@@ -116,26 +118,21 @@ export class ImportService {
                 // Upsert Document
                 const systemAuthId = await this.getSystemUser();
 
-                const newDoc = await tx.document.upsert({
-                    where: { id: existingDoc?.id || "new-id-placeholder" },
-                    update: {},
+                // Upsert Document (Core)
+                const doc = await tx.document.upsert({
+                    where: { id: existingDoc?.id || "new-id-placeholder" }, // Prisma handles new-id-placeholder gracefully? No, logic is: if existing, update, else create
+                    update: {
+                        title: title,
+                        content: parsedContent.content || '',
+                        updatedAt: new Date(),
+                    },
                     create: {
                         title: title,
                         content: parsedContent.content || '',
                         originalFilePath: filePath,
                         updatedAt: new Date(),
-                        documentTypeId: classification.category.id,
-                        topicId: classification.topic.id,
-                        machineModels: {
-                            create: classification.models.map(m => ({
-                                machineModel: { connect: { id: m.id } }
-                            }))
-                        },
                         departments: {
                             create: { department: { connect: { id: classification.department.id } } }
-                        },
-                        tags: {
-                            create: mappedTags.map(t => ({ tag: { connect: { name: t } } }))
                         },
                         versions: {
                             create: {
@@ -152,7 +149,65 @@ export class ImportService {
                     }
                 });
 
-                return newDoc;
+                // Upsert Technical Metadata (Extension)
+                await tx.technicalMetadata.upsert({
+                    where: { documentId: doc.id },
+                    update: {
+                        documentTypeId: classification.category.id,
+                        topicId: classification.topic.id,
+                        // Update relations? For import we might want to overwrite or merge.
+                        // For simplicity, let's just update Type/Topic. Relations are harder in upsert 'update'.
+                    },
+                    create: {
+                        documentId: doc.id,
+                        documentTypeId: classification.category.id,
+                        topicId: classification.topic.id,
+                        machineModels: {
+                            create: classification.models.map(m => ({
+                                machineModel: { connect: { id: m.id } }
+                            }))
+                        },
+                        tags: {
+                            create: mappedTags.map(t => ({ tag: { connect: { name: t } } }))
+                        }
+                    }
+                });
+
+                // Re-sync relations if it was an update (since the above create only runs on insert)
+                // If it's an update, 'create' in TechnicalMetadata didn't run.
+                // We need to ensure tags/models are updated.
+                // For simplicity in this script, we can do deleteMany/createMany for relations on metadata
+                // But we need the Metadata ID.
+                const meta = await tx.technicalMetadata.findUniqueOrThrow({ where: { documentId: doc.id } });
+
+                // Sync Machine Models
+                await tx.documentOnMachineModel.deleteMany({ where: { technicalMetadataId: meta.id } });
+                if (classification.models.length > 0) {
+                    await tx.documentOnMachineModel.createMany({
+                        data: classification.models.map(m => ({
+                            technicalMetadataId: meta.id,
+                            machineModelId: m.id
+                        }))
+                    });
+                }
+
+                // Sync Tags
+                await tx.documentOnTag.deleteMany({ where: { technicalMetadataId: meta.id } });
+                if (mappedTags.length > 0) {
+                    // We need Tag IDs for createMany
+                    // mappedTags are names. We upserted them earlier but didn't cache IDs.
+                    // The loop lines 111-114 upserted them.
+                    const tagObjs = await tx.tag.findMany({ where: { name: { in: mappedTags } } });
+
+                    await tx.documentOnTag.createMany({
+                        data: tagObjs.map(t => ({
+                            technicalMetadataId: meta.id,
+                            tagId: t.id
+                        }))
+                    });
+                }
+
+                return doc;
             }, {
                 maxWait: 5000,
                 timeout: 30000

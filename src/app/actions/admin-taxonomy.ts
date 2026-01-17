@@ -17,7 +17,9 @@ export async function getBrands() {
         orderBy: { name: 'asc' },
         include: {
             _count: {
-                select: { machineModels: true }
+                _count: {
+                    select: { machineModels: true }
+                }
             }
         }
     });
@@ -59,7 +61,7 @@ export async function getTags() {
         orderBy: { name: 'asc' },
         include: {
             _count: {
-                select: { documents: true }
+                select: { technicalMetadataList: true }
             }
         }
     });

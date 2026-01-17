@@ -23,10 +23,12 @@ const documentSchema = z.object({
  * Fetch all documents for the homepage (Server-Side Prefetching)
  * Optimized for LCP by running on the server.
  */
+/**
+ * Fetch all documents for the homepage (Server-Side Prefetching)
+ * Optimized for LCP by running on the server.
+ */
 export async function getDocumentsForHome(): Promise<FullDocument[]> {
     try {
-        // Note: We use the same query logic as GET /api/documents but directly via Prisma
-        // This avoids the HTTP roundtrip and enables direct database access
         const docs = await prisma.document.findMany({
             include: {
                 departments: {
@@ -34,28 +36,42 @@ export async function getDocumentsForHome(): Promise<FullDocument[]> {
                         department: true
                     }
                 },
-                documentType: true,
-                topic: true,
-                tags: {
+                // Modular Architecture: Fetch Extension Data
+                technicalMetadata: {
                     include: {
-                        tag: true
+                        documentType: true,
+                        topic: true,
+                        tags: {
+                            include: {
+                                tag: true
+                            }
+                        },
+                        machineModels: {
+                            include: {
+                                machineModel: true
+                            }
+                        }
                     }
                 },
                 fileAssets: true,
-                machineModels: {
-                    include: {
-                        machineModel: true
-                    }
-                }
             },
             orderBy: {
                 createdAt: 'desc'
             }
         });
 
-        // Transform to match FullDocument interface if necessary (Prisma return type usually matches closely)
-        // The include structure above matches FullDocument type
-        return docs as unknown as FullDocument[];
+        // Map Modular Data back to Flat Structure for UI Compatibility (Facade Pattern)
+        return docs.map(doc => ({
+            ...doc,
+            // Map Technical Metadata to top-level if it exists
+            documentType: doc.technicalMetadata?.documentType ?? null,
+            topic: doc.technicalMetadata?.topic ?? null,
+            tags: doc.technicalMetadata?.tags ?? [],
+            machineModels: doc.technicalMetadata?.machineModels ?? [],
+
+            // Clean up internal metadata object from result to match type EXACTLY
+            technicalMetadata: undefined
+        })) as unknown as FullDocument[];
     } catch (error) {
         console.error('Failed to prefetch home documents:', error);
         return [];
@@ -77,21 +93,33 @@ export async function createDocument(data: unknown) {
     const { title, content, documentTypeId, tagIds, departmentIds, machineModelIds } = parsed.data;
 
     try {
-        await prisma.document.create({
-            data: {
-                title,
-                content,
-                documentTypeId,
-                tags: tagIds?.length ? {
-                    create: tagIds.map(id => ({ tag: { connect: { id } } }))
-                } : undefined,
-                departments: departmentIds?.length ? {
-                    create: departmentIds.map(id => ({ department: { connect: { id } } }))
-                } : undefined,
-                machineModels: machineModelIds?.length ? {
-                    create: machineModelIds.map(id => ({ machineModel: { connect: { id } } }))
-                } : undefined,
-            }
+        // Transaction to ensure atomicity
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            // 1. Create Core Document
+            const doc = await tx.document.create({
+                data: {
+                    title,
+                    content,
+                    departments: departmentIds?.length ? {
+                        create: departmentIds.map(id => ({ department: { connect: { id } } }))
+                    } : undefined,
+                    // Note: No technical fields here anymore
+                }
+            });
+
+            // 2. Create Technical Metadata Extension
+            await tx.technicalMetadata.create({
+                data: {
+                    documentId: doc.id,
+                    documentTypeId, // Nullable in schema? Schema says String? so ok.
+                    tags: tagIds?.length ? {
+                        create: tagIds.map(id => ({ tag: { connect: { id } } }))
+                    } : undefined,
+                    machineModels: machineModelIds?.length ? {
+                        create: machineModelIds.map(id => ({ machineModel: { connect: { id } } }))
+                    } : undefined,
+                }
+            });
         });
 
         revalidatePath('/admin/documents');
@@ -119,23 +147,46 @@ export async function updateDocument(id: string, data: unknown) {
 
     try {
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            // 1. Update basic info
+            // 1. Update Core Info
             await tx.document.update({
                 where: { id },
-                data: { title, content, documentTypeId }
+                data: { title, content }
             });
 
-            // 2. Sync Tags
+            // 2. Ensure Technical Metadata Exists (Upsert preferred if missing, checking existence is safer)
+            // Ideally it exists, but for old docs migrated it should.
+            // We use upsert on the 1-1 relation.
+
+            // Wait, TechnicalMetadata has its own ID. We link by documentId.
+            // Upsert syntax on relation:
+            await tx.technicalMetadata.upsert({
+                where: { documentId: id },
+                create: {
+                    documentId: id,
+                    documentTypeId,
+                    // For new creation via update -> we might miss relations if we don't connect them here
+                    // But typically update handles them below.
+                },
+                update: {
+                    documentTypeId
+                }
+            });
+
+            // Get Metadata ID to update relations
+            const metadata = await tx.technicalMetadata.findUniqueOrThrow({ where: { documentId: id } });
+
+            // 3. Sync Tags (On Metadata)
             if (tagIds) {
-                await tx.documentOnTag.deleteMany({ where: { documentId: id } });
+                await tx.documentOnTag.deleteMany({ where: { technicalMetadataId: metadata.id } }); // Note: FK Changed
                 if (tagIds.length > 0) {
+                    // Need to map to technicalMetadataId
                     await tx.documentOnTag.createMany({
-                        data: tagIds.map(tagId => ({ documentId: id, tagId }))
+                        data: tagIds.map(tagId => ({ technicalMetadataId: metadata.id, tagId }))
                     });
                 }
             }
 
-            // 3. Sync Departments
+            // 4. Sync Departments (On Core)
             if (departmentIds) {
                 await tx.documentOnDepartment.deleteMany({ where: { documentId: id } });
                 if (departmentIds.length > 0) {
@@ -145,12 +196,12 @@ export async function updateDocument(id: string, data: unknown) {
                 }
             }
 
-            // 4. Sync Machine Models
+            // 5. Sync Machine Models (On Metadata)
             if (machineModelIds) {
-                await tx.documentOnMachineModel.deleteMany({ where: { documentId: id } });
+                await tx.documentOnMachineModel.deleteMany({ where: { technicalMetadataId: metadata.id } });
                 if (machineModelIds.length > 0) {
                     await tx.documentOnMachineModel.createMany({
-                        data: machineModelIds.map(machineModelId => ({ documentId: id, machineModelId }))
+                        data: machineModelIds.map(machineModelId => ({ technicalMetadataId: metadata.id, machineModelId }))
                     });
                 }
             }
@@ -269,14 +320,24 @@ export async function updateDocumentTags(documentIds: string[], tagNames: string
             const tagIds = tags.map(t => t.id);
 
             for (const documentId of documentIds) {
+                // Ensure Metadata Exists
+                const metadata = await tx.technicalMetadata.findUnique({ where: { documentId } });
+                if (!metadata) {
+                    // Should create if missing?
+                    // For bulk actions, ignoring missing metadata might be safer or creating empty one.
+                    // Let's create empty one.
+                    await tx.technicalMetadata.create({ data: { documentId } });
+                }
+                const metaId = (await tx.technicalMetadata.findUniqueOrThrow({ where: { documentId } })).id;
+
                 await tx.documentOnTag.deleteMany({
-                    where: { documentId }
+                    where: { technicalMetadataId: metaId }
                 });
 
                 if (tagIds.length > 0) {
                     await tx.documentOnTag.createMany({
                         data: tagIds.map(tagId => ({
-                            documentId,
+                            technicalMetadataId: metaId,
                             tagId
                         }))
                     });
@@ -463,12 +524,13 @@ export async function updateDocumentTopicRelation(documentIds: string[], topicId
     }
 
     try {
-        await prisma.document.updateMany({
-            where: {
-                id: { in: documentIds }
-            },
-            data: {
-                topicId: topicId
+        await prisma.$transaction(async (tx) => {
+            for (const documentId of documentIds) {
+                await tx.technicalMetadata.upsert({
+                    where: { documentId },
+                    create: { documentId, topicId },
+                    update: { topicId }
+                });
             }
         });
 
@@ -503,12 +565,13 @@ export async function updateDocumentTypeRelation(documentIds: string[], typeId: 
     }
 
     try {
-        await prisma.document.updateMany({
-            where: {
-                id: { in: documentIds }
-            },
-            data: {
-                documentTypeId: typeId
+        await prisma.$transaction(async (tx) => {
+            for (const documentId of documentIds) {
+                await tx.technicalMetadata.upsert({
+                    where: { documentId },
+                    create: { documentId, documentTypeId: typeId },
+                    update: { documentTypeId: typeId }
+                });
             }
         });
 
@@ -564,8 +627,15 @@ export async function updateSteps(documentId: string, steps: { id?: string, desc
 
     try {
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            // Ensure Metadata
+            let metadata = await tx.technicalMetadata.findUnique({ where: { documentId } });
+            if (!metadata) {
+                metadata = await tx.technicalMetadata.create({ data: { documentId } });
+            }
+            const metaId = metadata.id;
+
             type StepRecord = Awaited<ReturnType<typeof tx.step.findMany>>[number];
-            const existingSteps = await tx.step.findMany({ where: { documentId } });
+            const existingSteps = await tx.step.findMany({ where: { technicalMetadataId: metaId } });
             const incomingStepIds = steps.map((s: { id?: string }) => s.id).filter(Boolean) as string[];
 
             // Delete steps that are no longer present
@@ -586,7 +656,7 @@ export async function updateSteps(documentId: string, steps: { id?: string, desc
                 } else {
                     await tx.step.create({
                         data: {
-                            documentId,
+                            technicalMetadataId: metaId, // Changed FK
                             description: step.description,
                             order: step.order,
                         },

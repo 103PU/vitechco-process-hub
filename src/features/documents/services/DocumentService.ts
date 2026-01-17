@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 
 export class DocumentService {
   static async getAll(searchTerm: string = '') {
-    return prisma.document.findMany({
+    const docs = await prisma.document.findMany({
       where: {
         OR: [
           { title: { contains: searchTerm } },
@@ -11,28 +11,62 @@ export class DocumentService {
         ],
       },
       include: {
-        documentType: true,
-        topic: true,
-        machineModels: { include: { machineModel: { include: { brand: true } } } },
-        tags: { include: { tag: true } },
         departments: { include: { department: true } },
+        technicalMetadata: {
+          include: {
+            documentType: true,
+            topic: true,
+            machineModels: { include: { machineModel: { include: { brand: true } } } },
+            tags: { include: { tag: true } },
+          }
+        }
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Mapper
+    return docs.map(doc => ({
+      ...doc,
+      documentType: doc.technicalMetadata?.documentType ?? null,
+      documentTypeId: doc.technicalMetadata?.documentTypeId ?? null,
+      topic: doc.technicalMetadata?.topic ?? null,
+      topicId: doc.technicalMetadata?.topicId ?? null,
+      machineModels: doc.technicalMetadata?.machineModels ?? [],
+      tags: doc.technicalMetadata?.tags ?? [],
+      technicalMetadata: undefined
+    }));
   }
 
   static async getById(id: string) {
-    return prisma.document.findUnique({
+    const doc = await prisma.document.findUnique({
       where: { id },
       include: {
-        documentType: true,
-        topic: true,
-        tags: { include: { tag: true } },
         departments: { include: { department: true } },
-        machineModels: { include: { machineModel: { include: { brand: true } } } },
-        steps: { orderBy: { order: 'asc' } }
+        technicalMetadata: {
+          include: {
+            documentType: true,
+            topic: true,
+            tags: { include: { tag: true } },
+            machineModels: { include: { machineModel: { include: { brand: true } } } },
+            steps: { orderBy: { order: 'asc' } }
+          }
+        }
       }
     });
+
+    if (!doc) return null;
+
+    return {
+      ...doc,
+      documentType: doc.technicalMetadata?.documentType ?? null,
+      documentTypeId: doc.technicalMetadata?.documentTypeId ?? null,
+      topic: doc.technicalMetadata?.topic ?? null,
+      topicId: doc.technicalMetadata?.topicId ?? null,
+      tags: doc.technicalMetadata?.tags ?? [],
+      machineModels: doc.technicalMetadata?.machineModels ?? [],
+      steps: doc.technicalMetadata?.steps ?? [],
+      technicalMetadata: undefined
+    };
   }
 
 

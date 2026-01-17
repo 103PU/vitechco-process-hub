@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
-import { 
-    ChevronLeft, 
-    Calendar, 
-    Tag as TagIcon, 
-    Building, 
+import {
+    ChevronLeft,
+    Calendar,
+    Tag as TagIcon,
+    Building,
     Cpu,
     CheckCircle2,
     Clock
@@ -29,20 +29,36 @@ interface DocumentPageProps {
 }
 
 async function getDocument(id: string) {
-    console.log("Fetching document with ID:", id); // DEBUG LOG
     try {
         const doc = await prisma.document.findUnique({
             where: { id },
             include: {
-                documentType: true,
-                tags: { include: { tag: true } },
                 departments: { include: { department: true } },
-                machineModels: { include: { machineModel: { include: { brand: true } } } },
-                steps: { orderBy: { order: 'asc' } }
+                technicalMetadata: {
+                    include: {
+                        documentType: true,
+                        topic: true,
+                        tags: { include: { tag: true } },
+                        machineModels: { include: { machineModel: { include: { brand: true } } } },
+                        steps: { orderBy: { order: 'asc' } }
+                    }
+                }
             }
         });
-        if (!doc) console.log("Document not found in DB for ID:", id);
-        return doc;
+
+        if (!doc) return null;
+
+        // Map for UI
+        return {
+            ...doc,
+            documentType: doc.technicalMetadata?.documentType ?? null,
+            topic: doc.technicalMetadata?.topic ?? null,
+            tags: doc.technicalMetadata?.tags ?? [],
+            machineModels: doc.technicalMetadata?.machineModels ?? [],
+            steps: doc.technicalMetadata?.steps ?? [],
+            technicalMetadata: undefined
+        };
+
     } catch (error) {
         console.error("Error fetching document:", error);
         return null;
@@ -56,7 +72,7 @@ export default async function DocumentDetailPage({ params }: DocumentPageProps) 
     if (!doc) {
         notFound();
     }
-// ... rest of the component
+    // ... rest of the component
 
     return (
         <div className="bg-gray-50 min-h-screen pb-20">
@@ -79,9 +95,9 @@ export default async function DocumentDetailPage({ params }: DocumentPageProps) 
                 <div className="space-y-4 mb-8">
                     <div className="flex flex-wrap gap-2">
                         {doc.documentType && (
-                            <Badge 
-                                variant="outline" 
-                                style={{ 
+                            <Badge
+                                variant="outline"
+                                style={{
                                     backgroundColor: getTagColors(doc.documentType.name).bg,
                                     color: getTagColors(doc.documentType.name).text,
                                     borderColor: getTagColors(doc.documentType.name).border
@@ -111,7 +127,7 @@ export default async function DocumentDetailPage({ params }: DocumentPageProps) 
                                 Nội dung chi tiết
                             </h2>
                             {/* Render HTML Content safely with Enhanced Styles */}
-                            <div 
+                            <div
                                 className="prose prose-blue prose-lg max-w-none 
                                 prose-headings:font-bold prose-headings:text-gray-900 
                                 prose-p:text-gray-700 prose-p:leading-relaxed 
@@ -157,11 +173,11 @@ export default async function DocumentDetailPage({ params }: DocumentPageProps) 
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                     {doc.tags.map(({ tag }: { tag: { id: string; name: string } }) => (
-                                        <Badge 
-                                            key={tag.id} 
+                                        <Badge
+                                            key={tag.id}
                                             variant="outline"
                                             className="font-normal"
-                                            style={{ 
+                                            style={{
                                                 backgroundColor: getTagColors(tag.name).bg,
                                                 color: getTagColors(tag.name).text,
                                                 borderColor: getTagColors(tag.name).border

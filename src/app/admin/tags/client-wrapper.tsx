@@ -13,7 +13,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-type TagWithCount = Tag & { _count: { documents: number } };
+type TagWithCount = Tag & { _count: { technicalMetadataList: number } };
 
 export function TagClientWrapper({ initialData }: { initialData: TagWithCount[] }) {
     const [open, setOpen] = useState(false);
@@ -24,7 +24,7 @@ export function TagClientWrapper({ initialData }: { initialData: TagWithCount[] 
             header: "Tên Thẻ",
         },
         {
-            accessorKey: "_count.documents",
+            accessorKey: "_count.technicalMetadataList",
             header: "Số tài liệu",
         },
         {

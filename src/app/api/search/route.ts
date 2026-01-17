@@ -46,10 +46,13 @@ export async function GET(request: Request) {
 
         // Filter by single tag (legacy support)
         if (tag) {
-            where.tags = {
-                some: {
-                    tag: {
-                        name: tag,
+            where.technicalMetadata = {
+                ...where.technicalMetadata, // Preserve existing
+                tags: {
+                    some: {
+                        tag: {
+                            name: tag,
+                        },
                     },
                 },
             };
@@ -57,40 +60,63 @@ export async function GET(request: Request) {
 
         // Filter by multiple tags (new feature)
         if (tags && tags.length > 0) {
-            where.tags = {
-                some: {
-                    tag: {
-                        name: {
-                            in: tags,
-                        },
-                    },
-                },
-            };
+            const existingMeta = where.technicalMetadata || {};
+            // Merge conditions if needed, but for now simple assignment or merge
+            // If we have multiple technicalMetadata filters, we need to be careful.
+            // Prisma AND:
+            where.AND = [
+                ...(where.AND as any[] || []),
+                {
+                    technicalMetadata: {
+                        tags: {
+                            some: {
+                                tag: {
+                                    name: { in: tags }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
         }
 
         // Filter by brandId if provided
         if (brandId) {
-            where.machineModels = {
-                some: {
-                    machineModel: {
-                        brandId: brandId,
-                    },
-                },
-            };
+            where.AND = [
+                ...(where.AND as any[] || []),
+                {
+                    technicalMetadata: {
+                        machineModels: {
+                            some: {
+                                machineModel: {
+                                    brandId: brandId,
+                                },
+                            },
+                        }
+                    }
+                }
+            ];
         }
 
         // Filter by specific machine model
         if (modelId) {
-            where.machineModels = {
-                some: {
-                    machineModel: {
-                        id: modelId,
-                    },
-                },
-            };
+            where.AND = [
+                ...(where.AND as any[] || []),
+                {
+                    technicalMetadata: {
+                        machineModels: {
+                            some: {
+                                machineModel: {
+                                    id: modelId,
+                                },
+                            },
+                        }
+                    }
+                }
+            ];
         }
 
-        // Filter by department
+        // Filter by department (Core Field - remains same)
         if (departmentId) {
             where.departments = {
                 some: {
@@ -116,27 +142,43 @@ export async function GET(request: Request) {
                     // content: false, // ~50-100KB per document
 
                     // Include only essential metadata
-                    documentType: {
+                    technicalMetadata: {
                         select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
-                    topic: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
-                    // Limit machine models to first 5 for card display
-                    machineModels: {
-                        take: 5,
-                        select: {
-                            machineModel: {
+                            documentType: {
                                 select: {
                                     id: true,
                                     name: true,
-                                    brand: {
+                                },
+                            },
+                            topic: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                },
+                            },
+                            // Limit machine models to first 5 for card display
+                            machineModels: {
+                                take: 5,
+                                select: {
+                                    machineModel: {
+                                        select: {
+                                            id: true,
+                                            name: true,
+                                            brand: {
+                                                select: {
+                                                    id: true,
+                                                    name: true,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            // Limit tags to first 5 for card display
+                            tags: {
+                                take: 5,
+                                select: {
+                                    tag: {
                                         select: {
                                             id: true,
                                             name: true,
@@ -144,20 +186,9 @@ export async function GET(request: Request) {
                                     },
                                 },
                             },
-                        },
+                        }
                     },
-                    // Limit tags to first 5 for card display
-                    tags: {
-                        take: 5,
-                        select: {
-                            tag: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                },
-                            },
-                        },
-                    },
+
                     // Limit departments to first 3 for card display
                     departments: {
                         take: 3,
@@ -180,8 +211,18 @@ export async function GET(request: Request) {
             prisma.document.count({ where }),
         ]);
 
+        // Map Results
+        const mappedDocuments = documents.map(doc => ({
+            ...doc,
+            documentType: doc.technicalMetadata?.documentType ?? null,
+            topic: doc.technicalMetadata?.topic ?? null,
+            machineModels: doc.technicalMetadata?.machineModels ?? [],
+            tags: doc.technicalMetadata?.tags ?? [],
+            technicalMetadata: undefined
+        }));
+
         return NextResponse.json({
-            documents,
+            documents: mappedDocuments,
             totalCount,
             skip,
             take,

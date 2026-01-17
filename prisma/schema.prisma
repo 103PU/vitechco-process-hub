@@ -70,6 +70,7 @@ model VerificationToken {
 // ---- APPLICATION MODELS ----
 
 // Core model for each document/procedure
+// Now streamlined: Identity + Common Data only.
 model Document {
   id               String   @id @default(cuid())
   title            String
@@ -78,10 +79,40 @@ model Document {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  // Relationship to Departments (Owner)
+  // Maintaining Many-to-Many for now, but usually should be 1-to-1 owner?
+  // User Rule: 4-Level Data Hierarchy: Department -> Category ...
+  // Keeping M-N for backward compatibility unless we strictly enforce 1 Dept.
+  departments DocumentOnDepartment[]
+
+  // Week 1: History & Assets
+  versions   DocumentVersion[]
+  fileAssets FileAsset[]
+
+  // Week 3
+  workSessionItems WorkSessionItem[]
+
+  // Modules / Extensions
+  technicalMetadata TechnicalMetadata?
+  // Future: accountingMetadata AccountingMetadata?
+
+  // Performance indexes
+  @@index([title])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+// ---- MODULE: TECHNICAL / MAINTENANCE ----
+// Stores all technical-specific attributes
+model TechnicalMetadata {
+  id         String   @id @default(cuid())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String   @unique
+
+  // 4-Level Hierarchy Integration (Specific to Technical)
   documentType   DocumentType? @relation(fields: [documentTypeId], references: [id])
   documentTypeId String?
 
-  // Level 3: Specific Topic (e.g., "Vệ sinh", "Cài đặt")
   topic   DocumentTopic? @relation(fields: [topicId], references: [id])
   topicId String?
 
@@ -91,26 +122,12 @@ model Document {
   // Many-to-many relationship with Tags
   tags DocumentOnTag[]
 
-  // Many-to-many relationship with Departments
-  departments DocumentOnDepartment[]
-
-  // Store steps for interactive checklists
+  // Steps for interactive checklists
   steps Step[]
 
-  // Week 1: History & Assets
-  versions   DocumentVersion[]
-  fileAssets FileAsset[]
-
-  // Week 3
-  workSessionItems WorkSessionItem[]
-  // @@index([slug]) // Slug doesn't exist on Document in this schema? Check.
-
-  // Performance indexes
-  @@index([title])
-  @@index([createdAt])
+  @@index([documentId])
   @@index([documentTypeId])
   @@index([topicId])
-  @@index([updatedAt])
 }
 
 // Represents an interactive step in a procedure
@@ -118,17 +135,22 @@ model Step {
   id          String   @id @default(cuid())
   description String
   order       Int
-  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  documentId  String
+  
+  // Link to TechnicalMetadata instead of Document
+  technicalMetadata   TechnicalMetadata @relation(fields: [technicalMetadataId], references: [id], onDelete: Cascade)
+  technicalMetadataId String
 
-  @@unique([documentId, order])
+  @@unique([technicalMetadataId, order])
 }
 
 // Type of document, e.g., "Quy trình", "Lịch sử lỗi"
 model DocumentType {
   id        String          @id @default(cuid())
   name      String          @unique
-  documents Document[]
+  
+  // Relations updated to point to Metadata
+  technicalMetadataList TechnicalMetadata[]
+  
   topics    DocumentTopic[]
 }
 
@@ -138,7 +160,8 @@ model DocumentTopic {
   slug       String       @unique
   category   DocumentType @relation(fields: [categoryId], references: [id])
   categoryId String
-  documents  Document[]
+  
+  technicalMetadataList  TechnicalMetadata[]
 
   @@unique([categoryId, name]) // Unique name per category
 }
@@ -158,15 +181,15 @@ model MachineModel {
   brand   Brand?  @relation(fields: [brandId], references: [id])
   brandId String?
 
-  // Many-to-many relationship with Documents
-  documents DocumentOnMachineModel[]
+  // Many-to-many relationship with Documents (via Metadata)
+  technicalMetadataList DocumentOnMachineModel[]
 }
 
 // Generic tags for additional metadata, e.g., "SC Code", "Belt"
 model Tag {
   id        String          @id @default(cuid())
   name      String          @unique
-  documents DocumentOnTag[]
+  technicalMetadataList DocumentOnTag[]
 }
 
 // Departments within the company, e.g., "Kỹ thuật", "IT", "Sale"
@@ -228,27 +251,32 @@ model AuditLog {
   @@index([createdAt(sort: Desc)])
 }
 
-// Join table for Document and MachineModel
+// Join table for TechnicalMetadata and MachineModel
 model DocumentOnMachineModel {
-  document       Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  documentId     String
+  // Changed from Document to TechnicalMetadata
+  technicalMetadata       TechnicalMetadata     @relation(fields: [technicalMetadataId], references: [id], onDelete: Cascade)
+  technicalMetadataId     String
+  
   machineModel   MachineModel @relation(fields: [machineModelId], references: [id], onDelete: Cascade)
   machineModelId String
 
-  @@id([documentId, machineModelId])
+  @@id([technicalMetadataId, machineModelId])
 }
 
-// Join table for Document and Tag
+// Join table for TechnicalMetadata and Tag
 model DocumentOnTag {
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  documentId String
+  // Changed from Document to TechnicalMetadata
+  technicalMetadata   TechnicalMetadata @relation(fields: [technicalMetadataId], references: [id], onDelete: Cascade)
+  technicalMetadataId String
+  
   tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
   tagId      String
 
-  @@id([documentId, tagId])
+  @@id([technicalMetadataId, tagId])
 }
 
 // Join table for Document and Department
+// Documents still belong to Departments at Core level
 model DocumentOnDepartment {
   document     Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
   documentId   String
@@ -295,3 +323,4 @@ model WorkSessionItem {
 
   @@index([workSessionId])
 }
+

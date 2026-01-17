@@ -22,20 +22,24 @@ export async function GET(request: Request) {
         ],
       },
       include: {
-        documentType: true,
-        machineModels: {
+        technicalMetadata: {
           include: {
-            machineModel: {
+            documentType: true,
+            machineModels: {
               include: {
-                brand: true,
+                machineModel: {
+                  include: {
+                    brand: true,
+                  },
+                },
               },
             },
-          },
-        },
-        tags: {
-          include: {
-            tag: true,
-          },
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
+          }
         },
         departments: {
           include: {
@@ -48,7 +52,15 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(documents);
+    const mappedDocuments = documents.map((doc: any) => ({
+      ...doc,
+      documentType: doc.technicalMetadata?.documentType,
+      machineModels: doc.technicalMetadata?.machineModels,
+      tags: doc.technicalMetadata?.tags,
+      technicalMetadata: undefined
+    }));
+
+    return NextResponse.json(mappedDocuments);
   } catch (error) {
     console.error('Failed to fetch documents:', error);
     // Ensure you return a Response object in case of error
