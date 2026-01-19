@@ -73,8 +73,8 @@ describe('ImportService', () => {
     });
 
     it('should skip exact duplicate', async () => {
-        (mockPrisma.fileAsset.findUnique as any).mockResolvedValue({ id: 'existing' });
-        (mockPrisma.document.findFirst as any).mockResolvedValue({ id: 'existing-doc' });
+        (mockPrisma.fileAsset.findUnique as unknown as any).mockResolvedValue({ id: 'existing' });
+        (mockPrisma.document.findFirst as unknown as any).mockResolvedValue({ id: 'existing-doc' });
 
         const result = await service.processFile('/path/to/file.docx', ['Department', 'Category']);
 
