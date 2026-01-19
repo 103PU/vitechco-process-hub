@@ -68,7 +68,6 @@ export async function GET(request: Request) {
             // Prisma AND:
             where.AND = [
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...(where.AND as any[] || []),
                 {
                     technicalMetadata: {
@@ -88,7 +87,6 @@ export async function GET(request: Request) {
         if (brandId) {
             where.AND = [
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...(where.AND as any[] || []),
                 {
                     technicalMetadata: {
@@ -107,7 +105,6 @@ export async function GET(request: Request) {
         // Filter by specific machine model
         if (modelId) {
             where.AND = [
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...(where.AND as any[] || []),
                 {
