@@ -73,122 +73,44 @@ export function DataTableToolbar<TData>({
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-
-                {/* SEARCH & FILTERS */}
-                <div className="flex flex-1 items-center gap-3 w-full lg:w-auto">
-                    <div className="relative shrink-0">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            {/* TOP ROW: Search & Primary Actions */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="flex flex-1 items-center gap-2 w-full sm:max-w-md">
+                    <div className="relative w-full">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Tìm kiếm..."
+                            placeholder="Tìm kiếm tài liệu..."
                             value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                             onChange={(event) =>
                                 table.getColumn("title")?.setFilterValue(event.target.value)
                             }
-                            className="h-9 w-full sm:w-[200px] pl-8 shadow-sm"
+                            className="h-10 w-full pl-9 bg-white shadow-sm border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg"
                         />
                     </div>
-
-                    <span className="text-sm font-semibold text-gray-600 shrink-0">Bộ lọc:</span>
-
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-
-                        {/* 1. DEPARTMENT FILTER (MAIN) */}
-                        {table.getColumn("departments") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("departments")}
-                                title="Bộ phận"
-                                options={departmentOptions}
-                            />
-                        )}
-
-                        {/* 2. CATEGORY FILTER (MAIN) */}
-                        {table.getColumn("documentType") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("documentType")}
-                                title="Phân Mục"
-                                options={documentTypeOptions}
-                            />
-                        )}
-
-                        {/* SECONDARY FILTERS - COMPACT or GROUPED */}
-                        {/* We could use a Sheet or Popover here. For now, let's just make them visible but maybe visually distinct, 
-                            or if we strictly follow "Dropdown Menu", we need a custom component. 
-                            Given the constraints, keeping them inline but possibly ensuring they don't wrap ugly is key.
-                            However, the user showed "Rừng Nút". 
-                            Let's implement a "More Filters" button that is a Popover containing the other filters? 
-                            No, FacetedFilter is Popover. 
-                            Let's just keep Topic as Main? No, Topic is Level 3.
-                            Brand/Model/Tag are Level 4.
-                        */}
-
-                        <div className="h-4 w-px bg-gray-300 mx-2 hidden lg:block" />
-
-                        {table.getColumn("topic") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("topic")}
-                                title="Topic"
-                                options={topicOptions}
-                            />
-                        )}
-                        {/* Brand/Model/Tags - Only show if space permits or put in a 'Advanced' toggle? 
-                             Let's keep them for now but maybe make the list scrollable horizontal if too many. 
-                             The current `overflow-x-auto` handles it. 
-                         */}
-                        {table.getColumn("brand") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("brand")}
-                                title="Hãng"
-                                options={brandOptions}
-                            />
-                        )}
-
-                        {isFiltered && (
-                            <Button
-                                variant="ghost"
-                                onClick={() => table.resetColumnFilters()}
-                                className="h-8 px-2 lg:px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                                Reset
-                                <X className="ml-2 h-4 w-4" />
-                            </Button>
-                        )}
-                    </div>
+                    {isFiltered && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => table.resetColumnFilters()}
+                            className="h-10 px-3 text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+                        >
+                            Reset
+                            <X className="ml-2 h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
 
-                {/* MANAGEMENT GROUP - CLEANED UP */}
-                <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-4 lg:pt-0">
-
-                    {/* MORE FILTERS (Model, Tags) - Restored but cleaner */}
-                    {table.getColumn("model") && (
-                        <div className="hidden xl:block">
-                            <DataTableFacetedFilter
-                                column={table.getColumn("model")}
-                                title="Model"
-                                options={modelOptions}
-                            />
-                        </div>
-                    )}
-                    {table.getColumn("tags") && (
-                        <div className="hidden xl:block">
-                            <DataTableFacetedFilter
-                                column={table.getColumn("tags")}
-                                title="Tags"
-                                options={tagOptions}
-                            />
-                        </div>
-                    )}
-
-                    <div className="h-6 w-px bg-gray-300 mx-2 hidden lg:block" />
-
+                {/* VISIBLE ACTION BUTTONS (Create & Manage) */}
+                <div className="flex items-center gap-2 w-full sm:w-auto self-end sm:self-auto">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 gap-2">
+                            <Button variant="outline" className="h-10 gap-2 bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-indigo-600 transition-all shadow-sm">
                                 <Box className="h-4 w-4" />
-                                <span className="hidden sm:inline">Quản lý Hệ thống</span>
+                                <span className="hidden sm:inline">Quản lý</span>
+                                <span className="inline sm:hidden">Menu</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        {/* ... Dropdown Content (Same as before) ... */}
+                        <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel>Danh mục dữ liệu</DropdownMenuLabel>
                             <DropdownMenuSeparator />
 
@@ -224,12 +146,76 @@ export function DataTableToolbar<TData>({
 
                     <Link
                         href="/admin/documents/new"
-                        className="h-9 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm shadow-sm shrink-0 shadow-blue-200"
+                        className="h-10 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 flex items-center gap-2"
                     >
-                        <PlusCircle size={16} />
+                        <PlusCircle size={18} />
                         <span>Tạo mới</span>
                     </Link>
                 </div>
+            </div>
+
+            {/* SECOND ROW: Filters (Flex Wrap) */}
+            <div className="flex flex-wrap items-center gap-2 p-1">
+                {/* Label */}
+                <div className="flex items-center gap-2 mr-2 text-sm font-medium text-gray-500">
+                    <Search className="w-3.5 h-3.5" />
+                    Bộ lọc:
+                </div>
+
+                {/* 1. DEPARTMENT FILTER (MAIN) */}
+                {table.getColumn("departments") && (
+                    <DataTableFacetedFilter
+                        column={table.getColumn("departments")}
+                        title="Bộ phận"
+                        options={departmentOptions}
+                    />
+                )}
+
+                {/* 2. CATEGORY FILTER (MAIN) */}
+                {table.getColumn("documentType") && (
+                    <DataTableFacetedFilter
+                        column={table.getColumn("documentType")}
+                        title="Phân Mục"
+                        options={documentTypeOptions}
+                    />
+                )}
+
+                {/* 3. TOPIC FILTER */}
+                {table.getColumn("topic") && (
+                    <DataTableFacetedFilter
+                        column={table.getColumn("topic")}
+                        title="Topic"
+                        options={topicOptions}
+                    />
+                )}
+
+                {/* 4. BRAND / MODEL (Compact) */}
+                {table.getColumn("brand") && (
+                    <DataTableFacetedFilter
+                        column={table.getColumn("brand")}
+                        title="Hãng"
+                        options={brandOptions}
+                    />
+                )}
+                {/* 5. MODEL (Hidden on mobile, visible on desktop) */}
+                {table.getColumn("model") && (
+                    <div className="hidden lg:block">
+                        <DataTableFacetedFilter
+                            column={table.getColumn("model")}
+                            title="Model"
+                            options={modelOptions}
+                        />
+                    </div>
+                )}
+                {table.getColumn("tags") && (
+                    <div className="hidden xl:block">
+                        <DataTableFacetedFilter
+                            column={table.getColumn("tags")}
+                            title="Tags"
+                            options={tagOptions}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* BULK ACTIONS BAR */}

@@ -142,11 +142,12 @@ export const columns: ColumnDef<DocumentData>[] = [
                 </div>
             )
         },
+        // Hide brand column on screens smaller than lg to save space
+        enableHiding: true,
         filterFn: (row, id, value: string[]) => {
             const rowValue = row.getValue(id) as string[];
             if (!value.length) return true;
             if (!rowValue) return false;
-            // Check if ANY of the row's brands match the filter values
             return rowValue.some(v => value.includes(v));
         },
     },
