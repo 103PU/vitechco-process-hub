@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sheet';
 import { SearchForm } from '@/components/SearchForm';
 import AuthButton from '@/components/AuthButton';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
 export function Header() {
     const [open, setOpen] = useState(false);
@@ -43,7 +43,9 @@ export function Header() {
                                 {/* Mobile Search */}
                                 <div className="w-full">
                                     <div className="mb-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Tìm kiếm</div>
-                                    <SearchForm />
+                                    <Suspense fallback={<div className="h-10 w-full bg-gray-100 rounded-full animate-pulse" />}>
+                                        <SearchForm />
+                                    </Suspense>
                                 </div>
 
                                 {/* Mobile Nav Links */}
@@ -77,7 +79,9 @@ export function Header() {
 
                 {/* CENTER: Search (Desktop) */}
                 <div className="hidden md:flex flex-1 max-w-xl mx-auto">
-                    <SearchForm />
+                    <Suspense fallback={<div className="h-10 w-full bg-gray-100 rounded-full animate-pulse" />}>
+                        <SearchForm />
+                    </Suspense>
                 </div>
 
                 {/* RIGHT: Auth (Desktop) */}
