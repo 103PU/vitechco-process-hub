@@ -6,12 +6,12 @@ import { vi, describe, it, expect } from 'vitest';
 vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     document: {
-      findMany: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+      create: vi.fn().mockResolvedValue({ id: '1', title: 'Test Doc' }),
+      update: vi.fn().mockResolvedValue({ id: '1', title: 'Updated Doc' }),
+      delete: vi.fn().mockResolvedValue({ id: '1' }),
+      deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
   },
 }));

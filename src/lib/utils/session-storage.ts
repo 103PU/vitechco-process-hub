@@ -126,7 +126,11 @@ export class SessionStateManager {
      */
     private async syncToServer(state: ChecklistProgressState): Promise<boolean> {
         try {
-            const response = await fetch('/api/sessions/sync', {
+            const baseUrl = typeof window === 'undefined'
+                ? (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+                : '';
+
+            const response = await fetch(`${baseUrl}/api/sessions/sync`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
