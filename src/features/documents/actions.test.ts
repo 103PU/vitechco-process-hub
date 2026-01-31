@@ -88,12 +88,28 @@ describe('Document Actions Verification', () => {
         documentTypeId: 'type-123',
       };
 
-      (prisma.document.create as any).mockResolvedValue(validData);
+      (prisma.document.create as any).mockResolvedValue({ id: 'new-doc-id', ...validData });
 
       const result = await createDocument(validData);
 
       expect(result.success).toBe(true);
-      expect(prisma.document.create).toHaveBeenCalledWith({ data: validData });
+
+      // 1. Verify Core Document Creation
+      expect(prisma.document.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: validData.title,
+          content: validData.content,
+          departments: undefined
+        })
+      });
+
+      // 2. Verify Technical Metadata Creation
+      expect(prisma.technicalMetadata.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          documentId: 'new-doc-id',
+          documentTypeId: validData.documentTypeId
+        })
+      });
     });
 
     it('TC-003: Should create document with relations (Tags, Depts)', async () => {
@@ -115,19 +131,27 @@ describe('Document Actions Verification', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify the nested create structure
+      // 1. Verify Core Document (Departments here)
       expect(prisma.document.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           title: 'Complex Doc',
+          departments: {
+            create: [
+              { department: { connect: { id: 'dept-1' } } }
+            ]
+          }
+        })
+      });
+
+      // 2. Verify Technical Metadata (Tags here)
+      expect(prisma.technicalMetadata.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          documentId: 'new-id',
+          documentTypeId: 'type-1',
           tags: {
             create: [
               { tag: { connect: { id: 'tag-1' } } },
               { tag: { connect: { id: 'tag-2' } } }
-            ]
-          },
-          departments: {
-            create: [
-              { department: { connect: { id: 'dept-1' } } }
             ]
           }
         })
