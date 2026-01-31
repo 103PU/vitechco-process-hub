@@ -65,11 +65,13 @@ export default async function AdminDocumentsPage() {
 
     return (
         <section className="space-y-6">
-            <header>
-                <h1 className="text-3xl font-bold text-gray-800">Quản lý Dữ liệu</h1>
-                <p className="mt-1 text-gray-600">
-                    Xem, tạo mới, chỉnh sửa, và quản lý tất cả các tài liệu và dữ liệu hệ thống.
-                </p>
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Quản lý Dữ liệu</h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Hệ thống quản lý tài liệu kỹ thuật và thông số máy
+                    </p>
+                </div>
             </header>
             <DataTable
                 columns={columns}
