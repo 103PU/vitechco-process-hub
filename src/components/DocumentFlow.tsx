@@ -27,11 +27,13 @@ function LoadingSkeleton() {
           </div>
           <div className="space-y-6 pl-4">
             <div className="h-6 w-1/6 bg-gray-200 rounded mb-4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="h-32 bg-gray-200 rounded-xl"></div>
-              <div className="h-32 bg-gray-200 rounded-xl"></div>
-              <div className="h-32 bg-gray-200 rounded-xl"></div>
-              <div className="h-32 bg-gray-200 rounded-xl"></div>
+            <div className="@container">
+              <div className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4 gap-4">
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+              </div>
             </div>
           </div>
         </div>

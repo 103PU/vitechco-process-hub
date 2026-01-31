@@ -54,10 +54,13 @@ function TopicRow({ topicGroup }: { topicGroup: { topic: { id: string, name: str
             </div>
 
             {/* Document Grid - Clean & Aligned */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {topicGroup.docs.map(doc => (
-                    <DocumentCard key={doc.id} doc={doc} />
-                ))}
+            {/* Document Grid - Clean & Aligned - Wrapped in @container for component-level queries */}
+            <div className="@container">
+                <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4 gap-5">
+                    {topicGroup.docs.map(doc => (
+                        <DocumentCard key={doc.id} doc={doc} />
+                    ))}
+                </div>
             </div>
         </div>
     )

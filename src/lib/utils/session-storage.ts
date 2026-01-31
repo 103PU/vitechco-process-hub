@@ -126,7 +126,8 @@ export class SessionStateManager {
      */
     private async syncToServer(state: ChecklistProgressState): Promise<boolean> {
         try {
-            const baseUrl = typeof window === 'undefined'
+            const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+            const baseUrl = (typeof window === 'undefined' || isTest)
                 ? (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
                 : '';
 
